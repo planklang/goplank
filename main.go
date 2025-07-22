@@ -1,0 +1,5 @@
+package goplank
+
+func main() {
+
+}
