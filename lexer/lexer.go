@@ -47,7 +47,7 @@ func Lex(content string) ([]*Lexer, error) {
 	inStatement := false
 	inProperty := false
 	identifierAdded := false
-	for _, line := range lines {
+	for ln, line := range lines {
 		i := 0
 		words := strings.Fields(line)
 		for i < len(words) && words[i][0] != '#' { // skip comments
@@ -78,7 +78,7 @@ func Lex(content string) ([]*Lexer, error) {
 				lexs = append(lexs, &Lexer{KeywordType, word})
 				inStatement = true
 			} else if !inStatement {
-				fmt.Println(genErrorMessage(ErrStatementExcepted, i, words))
+				fmt.Println(genErrorMessage(ErrStatementExcepted, i, words, ln))
 				return nil, ErrStatementExcepted
 			} else if !identifierAdded && inProperty {
 				lexs = append(lexs, &Lexer{IdentifierType, word})
@@ -86,7 +86,7 @@ func Lex(content string) ([]*Lexer, error) {
 			} else {
 				ls, err := parseLiteral(&i, words)
 				if err != nil {
-					fmt.Println(genErrorMessage(err, i-1, words)) // i-1 because every error here leads to i == len(words)
+					fmt.Println(genErrorMessage(err, i-1, words, ln)) // i-1 because every error here leads to i == len(words)
 					return nil, err
 				}
 				lexs = append(lexs, ls...)
@@ -180,7 +180,7 @@ func parseLiteral(i *int, words []string) ([]*Lexer, error) {
 	return []*Lexer{{NumberType, word}}, nil
 }
 
-func genErrorMessage(err error, i int, words []string) string {
+func genErrorMessage(err error, i int, words []string, line int) string {
 	s := ""
 	for j := range i {
 		s += words[j] + " "
@@ -193,7 +193,7 @@ func genErrorMessage(err error, i int, words []string) string {
 	l2 := len(s) - 1
 	s += "\n"
 	if i == len(words)-1 {
-		for range len(s) - 2 {
+		for range l2 {
 			s += "-"
 		}
 		s += "^"
@@ -206,7 +206,7 @@ func genErrorMessage(err error, i int, words []string) string {
 			s += "-"
 		}
 	}
-	return s + "\n\n" + err.Error()
+	return fmt.Sprintf("%s (line %d)\n\n%s", s, line+1, err.Error())
 }
 
 func isDelimiter(word string) (bool, bool) {
