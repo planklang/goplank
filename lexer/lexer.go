@@ -14,6 +14,7 @@ const (
 	DelimiterType LexType = "delimiter"
 
 	ImplicitDelimiter = "implicit"
+	FigureDelimiter   = "---"
 )
 
 var (
@@ -39,15 +40,19 @@ func Lex(content string) []*Lexer {
 		words := strings.Fields(line)
 		for i < len(words) && words[i][0] != '#' { // skip comments
 			word := words[i]
-			isDelimiter := slices.Contains(delimiters, word)
-			if !delimiterAdded && i == 0 && !isDelimiter { // implicit delimiter
+			isDel, isDelFig := isDelimiter(word)
+			if !delimiterAdded && i == 0 && !isDel { // implicit delimiter
 				lexs = append(lexs, &Lexer{DelimiterType, ImplicitDelimiter})
 				delimiterAdded = false
 			}
 			if slices.Contains(keywords, word) {
 				lexs = append(lexs, &Lexer{KeywordType, word})
-			} else if isDelimiter {
-				lexs = append(lexs, &Lexer{DelimiterType, word})
+			} else if isDel {
+				if isDelFig {
+					lexs = append(lexs, &Lexer{DelimiterType, FigureDelimiter})
+				} else {
+					lexs = append(lexs, &Lexer{DelimiterType, word})
+				}
 				delimiterAdded = true
 			} else {
 				lexs = append(lexs, &Lexer{LiteralType, word})
@@ -57,4 +62,14 @@ func Lex(content string) []*Lexer {
 		delimiterAdded = false
 	}
 	return lexs
+}
+
+func isDelimiter(word string) (bool, bool) {
+	if slices.Contains(delimiters, word) {
+		return true, false
+	}
+	if len(word) >= 3 && word[:3] == "---" && strings.Count(word, "-") == len(word) {
+		return true, true
+	}
+	return false, false
 }
