@@ -1,8 +1,10 @@
 package lexer
 
 import (
+	"errors"
 	"fmt"
 	"slices"
+	"strconv"
 	"strings"
 )
 
@@ -13,6 +15,9 @@ const (
 	LiteralType    LexType = "literal"
 	DelimiterType  LexType = "delimiter"
 	IdentifierType LexType = "identifier"
+	VariableType   LexType = "variable"
+	StringType     LexType = "string"
+	NumberType     LexType = "number"
 
 	ImplicitDelimiter = "implicit"
 	FigureDelimiter   = "---"
@@ -23,6 +28,7 @@ var (
 	delimiters = []string{";;", "|"}
 
 	ErrStatementExcepted = fmt.Errorf("statement excepted")
+	ErrInvalidExpression = fmt.Errorf("invalied expression")
 )
 
 type Lexer struct {
@@ -74,13 +80,16 @@ func Lex(content string) ([]*Lexer, error) {
 			} else if !inStatement {
 				genErrorMessage(ErrStatementExcepted, i, words)
 				return nil, ErrStatementExcepted
-			} else if !inProperty {
-				lexs = append(lexs, &Lexer{LiteralType, word})
-			} else if !identifierAdded {
+			} else if !identifierAdded && inProperty {
 				lexs = append(lexs, &Lexer{IdentifierType, word})
 				identifierAdded = true
 			} else {
-				lexs = append(lexs, &Lexer{LiteralType, word})
+				ls, err := parseLiteral(&i, words)
+				if err != nil {
+					genErrorMessage(err, i, words)
+					return nil, err
+				}
+				lexs = append(lexs, ls...)
 			}
 			i++
 		}
@@ -89,6 +98,87 @@ func Lex(content string) ([]*Lexer, error) {
 		identifierAdded = false
 	}
 	return lexs, nil
+}
+
+func parseLiteral(i *int, words []string) ([]*Lexer, error) {
+	word := words[*i]
+	f := word[0]
+	switch f {
+	case '$':
+		if len(word) == 1 {
+			return nil, errors.Join(ErrInvalidExpression, fmt.Errorf("$ is reserved to call variables"))
+		}
+		return []*Lexer{{VariableType, word[1:]}}, nil
+	case '"', '\'', '`':
+		s := ""
+		if len(word) > 1 {
+			s = word[1:]
+		}
+		finished := false
+		for *i < len(words) && !finished {
+			c := words[*i]
+			finished = c[len(c)-1] == f
+			if finished {
+				if c != string(f) {
+					s += " " + c[:len(c)-1]
+				}
+			} else {
+				s += " " + words[*i]
+			}
+			*i++
+		}
+		if !finished {
+			return nil, errors.Join(ErrInvalidExpression, fmt.Errorf("string is not finished"))
+		}
+		return []*Lexer{{StringType, s}}, nil
+	case '(':
+		var lexs []*Lexer
+		lexs = append(lexs, &Lexer{DelimiterType, "("})
+		if len(word) > 1 {
+			//
+		}
+		finished := false
+		for *i < len(words) && !finished {
+			l, err := parseLiteral(i, words)
+			if err != nil {
+				return nil, err
+			}
+			c := words[*i]
+			finished = c[len(c)-1] != ')'
+			lexs = append(lexs, l...)
+		}
+		if !finished {
+			return nil, errors.Join(ErrInvalidExpression, fmt.Errorf("tuple is not finished"))
+		}
+		lexs = append(lexs, &Lexer{DelimiterType, ")"})
+		return lexs, nil
+	case '[':
+		var lexs []*Lexer
+		lexs = append(lexs, &Lexer{DelimiterType, "["})
+		if len(word) > 1 {
+			//
+		}
+		finished := false
+		for *i < len(words) && !finished {
+			l, err := parseLiteral(i, words)
+			if err != nil {
+				return nil, err
+			}
+			c := words[*i]
+			finished = c[len(c)-1] != ']'
+			lexs = append(lexs, l...)
+		}
+		if !finished {
+			return nil, errors.Join(ErrInvalidExpression, fmt.Errorf("list is not finished"))
+		}
+		lexs = append(lexs, &Lexer{DelimiterType, "]"})
+		return lexs, nil
+	}
+	_, err := strconv.ParseFloat(word, 64)
+	if err != nil {
+		return []*Lexer{{LiteralType, word}}, nil
+	}
+	return []*Lexer{{NumberType, word}}, nil
 }
 
 func genErrorMessage(err error, i int, words []string) string {
