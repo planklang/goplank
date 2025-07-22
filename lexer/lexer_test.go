@@ -125,4 +125,12 @@ func TestLexError(t *testing.T) {
 	if !errors.Is(err, ErrStatementExcepted) {
 		t.Error("Expected ErrStatementExcepted, got", err)
 	}
+
+	res, err = Lex("axis | color 'bonsoir je marche pas ")
+	if err == nil {
+		t.Error("Expected error, got ", res)
+	}
+	if !errors.Is(err, ErrInvalidExpression) {
+		t.Error("Expected ErrInvalidExpression, got", err)
+	}
 }
