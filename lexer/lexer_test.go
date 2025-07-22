@@ -1,9 +1,15 @@
 package lexer
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 func TestLex(t *testing.T) {
-	res := Lex("axis")
+	res, err := Lex("axis")
+	if err != nil {
+		t.Fatal(err)
+	}
 	if len(res) != 1 {
 		t.Error("Expected 1, got", len(res))
 		t.Log(res)
@@ -11,7 +17,10 @@ func TestLex(t *testing.T) {
 	if res[0].Type != KeywordType || res[0].Literal != "axis" {
 		t.Error("Expected keyword(axis), got", res[0])
 	}
-	res = Lex("axis x")
+	res, err = Lex("axis x")
+	if err != nil {
+		t.Fatal(err)
+	}
 	if len(res) != 2 {
 		t.Error("Expected 2, got", len(res))
 		t.Log(res)
@@ -22,7 +31,10 @@ func TestLex(t *testing.T) {
 	if res[1].Type != LiteralType || res[1].Literal != "x" {
 		t.Error("Expected literal(x), got", res[1])
 	}
-	res = Lex("axis # hello world")
+	res, err = Lex("axis # hello world")
+	if err != nil {
+		t.Fatal(err)
+	}
 	if len(res) != 1 {
 		t.Error("Expected 1, got", len(res))
 		t.Log(res)
@@ -31,7 +43,10 @@ func TestLex(t *testing.T) {
 		t.Error("Expected keyword(axis), got", res[0])
 	}
 
-	res = Lex("axis\nplot")
+	res, err = Lex("axis\nplot")
+	if err != nil {
+		t.Fatal(err)
+	}
 	if len(res) != 3 {
 		t.Error("Expected 3, got", len(res))
 		t.Log(res)
@@ -45,7 +60,10 @@ func TestLex(t *testing.T) {
 	if res[2].Type != KeywordType || res[2].Literal != "plot" {
 		t.Error("Expected keyword(plot), got", res[2])
 	}
-	res = Lex("axis\n| color")
+	res, err = Lex("axis\n| color")
+	if err != nil {
+		t.Fatal(err)
+	}
 	if len(res) != 3 {
 		t.Error("Expected 3, got", len(res))
 		t.Log(res)
@@ -59,7 +77,10 @@ func TestLex(t *testing.T) {
 	if res[2].Type != LiteralType || res[2].Literal != "color" {
 		t.Error("Expected literal(color), got", res[2])
 	}
-	res = Lex("axis\n--- axis")
+	res, err = Lex("axis\n--- axis")
+	if err != nil {
+		t.Fatal(err)
+	}
 	if len(res) != 3 {
 		t.Error("Expected 3, got", len(res))
 		t.Log(res)
@@ -72,5 +93,23 @@ func TestLex(t *testing.T) {
 	}
 	if res[2].Type != KeywordType || res[2].Literal != "axis" {
 		t.Error("Expected keyword(color), got", res[2])
+	}
+}
+
+func TestLexError(t *testing.T) {
+	res, err := Lex("1")
+	if err == nil {
+		t.Error("Expected error, got ", res)
+	}
+	if !errors.Is(err, ErrStatementExcepted) {
+		t.Error("Expected ErrStatementExcepted, got", err)
+	}
+
+	res, err = Lex("axis\n1")
+	if err == nil {
+		t.Error("Expected error, got ", res)
+	}
+	if !errors.Is(err, ErrStatementExcepted) {
+		t.Error("Expected ErrStatementExcepted, got", err)
 	}
 }

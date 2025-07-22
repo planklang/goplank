@@ -20,6 +20,8 @@ const (
 var (
 	keywords   = []string{"plot", "default", "overwrite", "ow", "axis"}
 	delimiters = []string{";;", "|"}
+
+	ErrStatementExcepted = fmt.Errorf("statement excepted")
 )
 
 type Lexer struct {
@@ -31,10 +33,11 @@ func (lex *Lexer) String() string {
 	return fmt.Sprintf("%s(%s)", lex.Type, lex.Literal)
 }
 
-func Lex(content string) []*Lexer {
+func Lex(content string) ([]*Lexer, error) {
 	var lexs []*Lexer
 	lines := strings.Split(content, "\n")
 	delimiterAdded := true
+	inStatement := false
 	for _, line := range lines {
 		i := 0
 		words := strings.Fields(line)
@@ -44,16 +47,22 @@ func Lex(content string) []*Lexer {
 			if !delimiterAdded && i == 0 && !isDel { // implicit delimiter
 				lexs = append(lexs, &Lexer{DelimiterType, ImplicitDelimiter})
 				delimiterAdded = false
+				inStatement = false
 			}
 			if slices.Contains(keywords, word) {
 				lexs = append(lexs, &Lexer{KeywordType, word})
+				inStatement = true
 			} else if isDel {
+				inStatement = false
 				if isDelFig {
 					lexs = append(lexs, &Lexer{DelimiterType, FigureDelimiter})
 				} else {
 					lexs = append(lexs, &Lexer{DelimiterType, word})
+					inStatement = word == "|"
 				}
 				delimiterAdded = true
+			} else if !inStatement {
+				return nil, ErrStatementExcepted
 			} else {
 				lexs = append(lexs, &Lexer{LiteralType, word})
 			}
@@ -61,7 +70,7 @@ func Lex(content string) []*Lexer {
 		}
 		delimiterAdded = false
 	}
-	return lexs
+	return lexs, nil
 }
 
 func isDelimiter(word string) (bool, bool) {
