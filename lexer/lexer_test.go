@@ -105,7 +105,7 @@ func TestLexError(t *testing.T) {
 		t.Error("Expected ErrStatementExcepted, got", err)
 	}
 
-	res, err = Lex("axis\n1")
+	res, err = Lex("axis\n;; 1 hello")
 	if err == nil {
 		t.Error("Expected error, got ", res)
 	}

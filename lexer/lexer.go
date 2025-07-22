@@ -62,6 +62,7 @@ func Lex(content string) ([]*Lexer, error) {
 				}
 				delimiterAdded = true
 			} else if !inStatement {
+				genErrorMessage(ErrStatementExcepted, i, words)
 				return nil, ErrStatementExcepted
 			} else {
 				lexs = append(lexs, &Lexer{LiteralType, word})
@@ -71,6 +72,28 @@ func Lex(content string) ([]*Lexer, error) {
 		delimiterAdded = false
 	}
 	return lexs, nil
+}
+
+func genErrorMessage(err error, i int, words []string) string {
+	s := ""
+	if i > 0 {
+		s += words[i-1] + " "
+	}
+	s += words[i]
+	l1 := len(s) - 1
+	if i < len(words)-1 {
+		s += " " + words[i+1]
+	}
+	l2 := len(s) - 1
+	s += "\n"
+	for range l1 {
+		s += "-"
+	}
+	s += "^"
+	for range l2 - l1 {
+		s += "-"
+	}
+	return "\n" + err.Error()
 }
 
 func isDelimiter(word string) (bool, bool) {
