@@ -111,26 +111,25 @@ func parseLiteral(i *int, words []string) ([]*Lexer, error) {
 		return []*Lexer{{VariableType, word[1:]}}, nil
 	case '"', '\'', '`':
 		s := ""
-		if len(word) > 1 {
-			s = word[1:]
-		}
 		finished := false
+		j := 1
 		for *i < len(words) && !finished {
 			c := words[*i]
-			finished = c[len(c)-1] == f
-			if finished {
-				if c != string(f) {
-					s += " " + c[:len(c)-1]
+			for j < len(c) && !finished {
+				s += string(c[j])
+				if j < len(c)-1 {
+					finished = c[j+1] == f
 				}
-			} else {
-				s += " " + words[*i]
+				j++
 			}
+			s += " "
+			j = 0
 			*i++
 		}
 		if !finished {
 			return nil, errors.Join(ErrInvalidExpression, fmt.Errorf("string is not finished"))
 		}
-		return []*Lexer{{StringType, s}}, nil
+		return []*Lexer{{StringType, s[:len(s)-1]}}, nil
 	case '(':
 		var lexs []*Lexer
 		lexs = append(lexs, &Lexer{DelimiterType, "("})

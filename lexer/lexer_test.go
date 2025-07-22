@@ -96,6 +96,19 @@ func TestLex(t *testing.T) {
 	}
 }
 
+func TestLexLiteral(t *testing.T) {
+	res, err := Lex("axis | color 'bonsoir je marche' ")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(res) != 4 {
+		t.Error("Expected 4, got", len(res))
+	}
+	if res[3].Type != StringType || res[3].Literal != "bonsoir je marche" {
+		t.Error("Expected string(bonsoir je marche), got", res[3])
+	}
+}
+
 func TestLexError(t *testing.T) {
 	res, err := Lex("1")
 	if err == nil {
