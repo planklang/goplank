@@ -27,7 +27,7 @@ type Lexer struct {
 }
 
 func (lex *Lexer) String() string {
-	return fmt.Sprintf("%s(%s)", lex.Literal, lex.Type)
+	return fmt.Sprintf("%s(%s)", lex.Type, lex.Literal)
 }
 
 func Lex(content string) []*Lexer {
