@@ -88,7 +88,7 @@ func Lex(content string) ([]*Lexer, error) {
 				lexs = append(lexs, &Lexer{IdentifierType, word})
 				identifierAdded = true
 			} else {
-				ls, err := parseLiteral(&i, words)
+				ls, err := parseLiteral(word, &i, words)
 				if err != nil {
 					fmt.Println(genErrorMessage(err, i-1, words, ln)) // i-1 because every error here leads to i == len(words)
 					return nil, err
@@ -104,8 +104,7 @@ func Lex(content string) ([]*Lexer, error) {
 	return lexs, nil
 }
 
-func parseLiteral(i *int, words []string) ([]*Lexer, error) {
-	word := words[*i]
+func parseLiteral(word string, i *int, words []string) ([]*Lexer, error) {
 	f := word[0]
 	switch f {
 	case '$':
@@ -134,47 +133,18 @@ func parseLiteral(i *int, words []string) ([]*Lexer, error) {
 			return nil, errors.Join(ErrInvalidExpression, fmt.Errorf("string is not finished"))
 		}
 		return []*Lexer{{StringType, s[:len(s)-1]}}, nil
-	case '(':
+	case '(', ')', '[', ']':
 		var lexs []*Lexer
-		lexs = append(lexs, &Lexer{DelimiterType, "("})
-		if len(word) > 1 {
-			//
+		lexs = append(lexs, &Lexer{DelimiterType, string(f)})
+		if len(word) == 1 {
+			*i++
+			return lexs, nil
 		}
-		finished := false
-		for *i < len(words) && !finished {
-			l, err := parseLiteral(i, words)
-			if err != nil {
-				return nil, err
-			}
-			c := words[*i]
-			finished = c[len(c)-1] != ')'
-			lexs = append(lexs, l...)
+		ls, err := parseLiteral(word[1:], i, words)
+		if err != nil {
+			return nil, err
 		}
-		if !finished {
-			return nil, errors.Join(ErrInvalidExpression, fmt.Errorf("tuple is not finished"))
-		}
-		lexs = append(lexs, &Lexer{DelimiterType, ")"})
-		return lexs, nil
-	case '[':
-		var lexs []*Lexer
-		lexs = append(lexs, &Lexer{DelimiterType, "["})
-		if len(word) > 1 {
-			//
-		}
-		finished := false
-		for *i < len(words) && !finished {
-			l, err := parseLiteral(i, words)
-			if err != nil {
-				return nil, err
-			}
-			c := words[*i]
-			finished = c[len(c)-1] != ']'
-			lexs = append(lexs, l...)
-		}
-		if !finished {
-			return nil, errors.Join(ErrInvalidExpression, fmt.Errorf("list is not finished"))
-		}
-		lexs = append(lexs, &Lexer{DelimiterType, "]"})
+		lexs = append(lexs, ls...)
 		return lexs, nil
 	}
 	_, err := strconv.ParseFloat(word, 64)

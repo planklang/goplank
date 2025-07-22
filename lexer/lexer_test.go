@@ -107,6 +107,33 @@ func TestLexLiteral(t *testing.T) {
 	if res[3].Type != StringType || res[3].Literal != "bonsoir je marche" {
 		t.Error("Expected string(bonsoir je marche), got", res[3])
 	}
+
+	res, err = Lex("axis (1 2 3 4)")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(res) != 7 {
+		t.Error("Expected 7, got", len(res))
+		t.Log(res)
+	}
+	if res[1].Type != DelimiterType || res[1].Literal != "(" {
+		t.Error("Expected delimiter((), got", res[1])
+	}
+	if res[2].Type != NumberType || res[2].Literal != "1" {
+		t.Error("Expected number(1), got", res[2])
+	}
+	if res[3].Type != NumberType || res[3].Literal != "2" {
+		t.Error("Expected number(2), got", res[3])
+	}
+	if res[4].Type != NumberType || res[4].Literal != "3" {
+		t.Error("Expected number(3), got", res[4])
+	}
+	if res[5].Type != NumberType || res[5].Literal != "4" {
+		t.Error("Expected number(4), got", res[5])
+	}
+	if res[6].Type != DelimiterType || res[6].Literal != ")" {
+		t.Error("Expected delimiter()), got", res[6])
+	}
 }
 
 func TestLexError(t *testing.T) {
