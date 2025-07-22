@@ -9,9 +9,11 @@ import (
 type LexType string
 
 const (
-	keywordType   LexType = "keyword"
-	literalType   LexType = "literal"
-	delimiterType LexType = "delimiter"
+	KeywordType   LexType = "keyword"
+	LiteralType   LexType = "literal"
+	DelimiterType LexType = "delimiter"
+
+	ImplicitDelimiter = "implicit"
 )
 
 var (
@@ -31,19 +33,28 @@ func (lex *Lexer) String() string {
 func Lex(content string) []*Lexer {
 	var lexs []*Lexer
 	lines := strings.Split(content, "\n")
+	delimiterAdded := true
 	for _, line := range lines {
 		i := 0
 		words := strings.Fields(line)
 		for i < len(words) && words[i][0] != '#' { // skip comments
-			if slices.Contains(keywords, words[i]) {
-				lexs = append(lexs, &Lexer{keywordType, words[i]})
-			} else if slices.Contains(delimiters, words[i]) {
-				lexs = append(lexs, &Lexer{delimiterType, words[i]})
+			word := words[i]
+			isDelimiter := slices.Contains(delimiters, word)
+			if !delimiterAdded && i == 0 && !isDelimiter { // implicit delimiter
+				lexs = append(lexs, &Lexer{DelimiterType, ImplicitDelimiter})
+				delimiterAdded = false
+			}
+			if slices.Contains(keywords, word) {
+				lexs = append(lexs, &Lexer{KeywordType, word})
+			} else if isDelimiter {
+				lexs = append(lexs, &Lexer{DelimiterType, word})
+				delimiterAdded = true
 			} else {
-				lexs = append(lexs, &Lexer{literalType, words[i]})
+				lexs = append(lexs, &Lexer{LiteralType, word})
 			}
 			i++
 		}
+		delimiterAdded = false
 	}
 	return lexs
 }
