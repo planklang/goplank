@@ -182,8 +182,8 @@ func parseLiteral(i *int, words []string) ([]*Lexer, error) {
 
 func genErrorMessage(err error, i int, words []string) string {
 	s := ""
-	if i > 0 {
-		s += words[i-1] + " "
+	for j := range i {
+		s += words[j] + " "
 	}
 	s += words[i]
 	l1 := len(s) - 1
