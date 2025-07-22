@@ -185,21 +185,28 @@ func genErrorMessage(err error, i int, words []string) string {
 	for j := range i {
 		s += words[j] + " "
 	}
+	l1 := len(s)
 	s += words[i]
-	l1 := len(s) - 1
-	if i < len(words)-1 {
-		s += " " + words[i+1]
+	for j := range len(words) - i - 1 {
+		s += " " + words[j+i+1]
 	}
 	l2 := len(s) - 1
 	s += "\n"
-	for range l1 {
-		s += "-"
+	if i == len(words)-1 {
+		for range len(s) - 2 {
+			s += "-"
+		}
+		s += "^"
+	} else {
+		for range l1 {
+			s += "-"
+		}
+		s += "^"
+		for range l2 - l1 {
+			s += "-"
+		}
 	}
-	s += "^"
-	for range l2 - l1 {
-		s += "-"
-	}
-	return s + "\n" + err.Error()
+	return s + "\n\n" + err.Error()
 }
 
 func isDelimiter(word string) (bool, bool) {

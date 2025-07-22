@@ -110,7 +110,7 @@ func TestLexLiteral(t *testing.T) {
 }
 
 func TestLexError(t *testing.T) {
-	res, err := Lex("1")
+	res, err := Lex("12")
 	if err == nil {
 		t.Error("Expected error, got ", res)
 	}
