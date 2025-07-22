@@ -74,8 +74,8 @@ func TestLex(t *testing.T) {
 	if res[1].Type != DelimiterType || res[1].Literal != "|" {
 		t.Error("Expected delimiter(|), got", res[1])
 	}
-	if res[2].Type != LiteralType || res[2].Literal != "color" {
-		t.Error("Expected literal(color), got", res[2])
+	if res[2].Type != IdentifierType || res[2].Literal != "color" {
+		t.Error("Expected identifier(color), got", res[2])
 	}
 	res, err = Lex("axis\n--- axis")
 	if err != nil {

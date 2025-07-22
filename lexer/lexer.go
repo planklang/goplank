@@ -9,9 +9,10 @@ import (
 type LexType string
 
 const (
-	KeywordType   LexType = "keyword"
-	LiteralType   LexType = "literal"
-	DelimiterType LexType = "delimiter"
+	KeywordType    LexType = "keyword"
+	LiteralType    LexType = "literal"
+	DelimiterType  LexType = "delimiter"
+	IdentifierType LexType = "identifier"
 
 	ImplicitDelimiter = "implicit"
 	FigureDelimiter   = "---"
@@ -38,38 +39,54 @@ func Lex(content string) ([]*Lexer, error) {
 	lines := strings.Split(content, "\n")
 	delimiterAdded := true
 	inStatement := false
+	inProperty := false
+	identifierAdded := false
 	for _, line := range lines {
 		i := 0
 		words := strings.Fields(line)
 		for i < len(words) && words[i][0] != '#' { // skip comments
 			word := words[i]
-			isDel, isDelFig := isDelimiter(word)
-			if !delimiterAdded && i == 0 && !isDel { // implicit delimiter
-				lexs = append(lexs, &Lexer{DelimiterType, ImplicitDelimiter})
+			isDelim, isDelimFig := isDelimiter(word)
+			if !delimiterAdded && i == 0 && !isDelim { // implicit delimiter
+				inStatement = false
+				inProperty = false
+				identifierAdded = false
 				delimiterAdded = false
-				inStatement = false
+				lexs = append(lexs, &Lexer{DelimiterType, ImplicitDelimiter})
 			}
-			if slices.Contains(keywords, word) {
-				lexs = append(lexs, &Lexer{KeywordType, word})
-				inStatement = true
-			} else if isDel {
+			if isDelim {
 				inStatement = false
-				if isDelFig {
+				inProperty = false
+				identifierAdded = false
+				delimiterAdded = true
+				if isDelimFig {
 					lexs = append(lexs, &Lexer{DelimiterType, FigureDelimiter})
 				} else {
 					lexs = append(lexs, &Lexer{DelimiterType, word})
-					inStatement = word == "|"
+					if word == "|" {
+						inProperty = true
+						inStatement = true
+					}
 				}
-				delimiterAdded = true
+			} else if slices.Contains(keywords, word) {
+				lexs = append(lexs, &Lexer{KeywordType, word})
+				inStatement = true
 			} else if !inStatement {
 				genErrorMessage(ErrStatementExcepted, i, words)
 				return nil, ErrStatementExcepted
+			} else if !inProperty {
+				lexs = append(lexs, &Lexer{LiteralType, word})
+			} else if !identifierAdded {
+				lexs = append(lexs, &Lexer{IdentifierType, word})
+				identifierAdded = true
 			} else {
 				lexs = append(lexs, &Lexer{LiteralType, word})
 			}
 			i++
 		}
 		delimiterAdded = false
+		inProperty = false
+		identifierAdded = false
 	}
 	return lexs, nil
 }
