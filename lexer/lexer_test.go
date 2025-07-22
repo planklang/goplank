@@ -54,8 +54,8 @@ func TestLex(t *testing.T) {
 	if res[0].Type != KeywordType || res[0].Literal != "axis" {
 		t.Error("Expected keyword(axis), got", res[0])
 	}
-	if res[1].Type != DelimiterType || res[1].Literal != ImplicitDelimiter {
-		t.Error("Expected delimiter(axis), got", res[1])
+	if res[1].Type != StatementDelimiterType || res[1].Literal != ImplicitDelimiter {
+		t.Error("Expected statement_delimiter(axis), got", res[1])
 	}
 	if res[2].Type != KeywordType || res[2].Literal != "plot" {
 		t.Error("Expected keyword(plot), got", res[2])
@@ -71,8 +71,8 @@ func TestLex(t *testing.T) {
 	if res[0].Type != KeywordType || res[0].Literal != "axis" {
 		t.Error("Expected keyword(axis), got", res[0])
 	}
-	if res[1].Type != DelimiterType || res[1].Literal != "|" {
-		t.Error("Expected delimiter(|), got", res[1])
+	if res[1].Type != PropertyDelimiterType || res[1].Literal != "|" {
+		t.Error("Expected property_delimiter(|), got", res[1])
 	}
 	if res[2].Type != IdentifierType || res[2].Literal != "color" {
 		t.Error("Expected identifier(color), got", res[2])
@@ -88,8 +88,8 @@ func TestLex(t *testing.T) {
 	if res[0].Type != KeywordType || res[0].Literal != "axis" {
 		t.Error("Expected keyword(axis), got", res[0])
 	}
-	if res[1].Type != DelimiterType || res[1].Literal != FigureDelimiter {
-		t.Error("Expected delimiter(---), got", res[1])
+	if res[1].Type != FigureDelimiterType || res[1].Literal != FigureDelimiter {
+		t.Error("Expected figure_delimiter(---), got", res[1])
 	}
 	if res[2].Type != KeywordType || res[2].Literal != "axis" {
 		t.Error("Expected keyword(color), got", res[2])

@@ -11,21 +11,25 @@ import (
 type LexType string
 
 const (
-	KeywordType    LexType = "keyword"
-	LiteralType    LexType = "literal"
-	DelimiterType  LexType = "delimiter"
-	IdentifierType LexType = "identifier"
-	VariableType   LexType = "variable"
-	StringType     LexType = "string"
-	NumberType     LexType = "number"
+	KeywordType            LexType = "keyword"
+	LiteralType            LexType = "literal"
+	DelimiterType          LexType = "delimiter"
+	PropertyDelimiterType  LexType = "property_delimiter"
+	FigureDelimiterType    LexType = "figure_delimiter"
+	StatementDelimiterType LexType = "statement_delimiter"
+	IdentifierType         LexType = "identifier"
+	VariableType           LexType = "variable"
+	StringType             LexType = "string"
+	NumberType             LexType = "number"
 
 	ImplicitDelimiter = "implicit"
 	FigureDelimiter   = "---"
 )
 
 var (
-	keywords   = []string{"plot", "default", "overwrite", "ow", "axis"}
-	delimiters = []string{";;", "|"}
+	keywords            = []string{"plot", "default", "overwrite", "ow", "axis"}
+	propertyDelimiters  = []string{"|"}
+	statementDelimiters = []string{";;"}
 
 	ErrStatementExcepted = fmt.Errorf("statement excepted")
 	ErrInvalidExpression = fmt.Errorf("invalid expression")
@@ -52,24 +56,24 @@ func Lex(content string) ([]*Lexer, error) {
 		words := strings.Fields(line)
 		for i < len(words) && words[i][0] != '#' { // skip comments
 			word := words[i]
-			isDelim, isDelimFig := isDelimiter(word)
+			isDelim, typ := isDelimiter(word)
 			if !delimiterAdded && i == 0 && !isDelim { // implicit delimiter
 				inStatement = false
 				inProperty = false
 				identifierAdded = false
 				delimiterAdded = false
-				lexs = append(lexs, &Lexer{DelimiterType, ImplicitDelimiter})
+				lexs = append(lexs, &Lexer{StatementDelimiterType, ImplicitDelimiter})
 			}
 			if isDelim {
 				inStatement = false
 				inProperty = false
 				identifierAdded = false
 				delimiterAdded = true
-				if isDelimFig {
-					lexs = append(lexs, &Lexer{DelimiterType, FigureDelimiter})
+				if typ == FigureDelimiterType {
+					lexs = append(lexs, &Lexer{typ, FigureDelimiter})
 				} else {
-					lexs = append(lexs, &Lexer{DelimiterType, word})
-					if word == "|" {
+					lexs = append(lexs, &Lexer{typ, word})
+					if typ == PropertyDelimiterType {
 						inProperty = true
 						inStatement = true
 					}
@@ -209,12 +213,14 @@ func genErrorMessage(err error, i int, words []string, line int) string {
 	return fmt.Sprintf("%s (line %d)\n\n%s", s, line+1, err.Error())
 }
 
-func isDelimiter(word string) (bool, bool) {
-	if slices.Contains(delimiters, word) {
-		return true, false
+func isDelimiter(word string) (bool, LexType) {
+	if slices.Contains(statementDelimiters, word) {
+		return true, StatementDelimiterType
+	} else if slices.Contains(propertyDelimiters, word) {
+		return true, PropertyDelimiterType
 	}
 	if len(word) >= 3 && word[:3] == "---" && strings.Count(word, "-") == len(word) {
-		return true, true
+		return true, FigureDelimiterType
 	}
-	return false, false
+	return false, ""
 }
