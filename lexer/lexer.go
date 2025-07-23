@@ -91,7 +91,7 @@ func Lex(content string) ([]*Lexer, error) {
 			} else {
 				ls, err := parseLiteral(&i, words)
 				if err != nil {
-					fmt.Println(genErrorMessage(err, i-1, words, ln)) // i-1 because every error here leads to i == len(words)
+					fmt.Println(genErrorMessage(err, i, words, ln)) // i-1 because every error here leads to i == len(words)
 					return nil, err
 				}
 				lexs = append(lexs, ls...)
@@ -135,6 +135,7 @@ func parseLiteral(i *int, words []string) ([]*Lexer, error) {
 			*i++
 		}
 		if !finished {
+			*i--
 			return nil, errors.Join(ErrInvalidExpression, fmt.Errorf("string is not finished"))
 		}
 		return []*Lexer{{StringType, s[:len(s)-1]}}, nil
@@ -167,7 +168,9 @@ func parseLiteral(i *int, words []string) ([]*Lexer, error) {
 		} else if !acceptContent {
 			return nil, errors.Join(ErrInvalidExpression, fmt.Errorf("cannot parse %s", word))
 		} else if isDigit(string(c)) || (c == '.' && !isDecimal) {
-			isDecimal = c == '.'
+			if !isDecimal {
+				isDecimal = c == '.'
+			}
 			if content == "" {
 				content += "0" // turns .5 into 0.5
 			}
