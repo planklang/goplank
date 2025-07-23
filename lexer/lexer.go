@@ -107,10 +107,13 @@ func Lex(content string) ([]*Lexer, error) {
 
 func parseLiteral(i *int, words []string) ([]*Lexer, error) {
 	word := words[*i]
+	f := word[0]
 	if isDigit(word) {
+		if f == '.' {
+			word = "0" + word
+		}
 		return []*Lexer{{NumberType, word}}, nil
 	}
-	f := word[0]
 	switch f {
 	case '$':
 		if len(word) == 1 {

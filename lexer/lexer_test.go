@@ -108,6 +108,48 @@ func TestLexLiteral(t *testing.T) {
 		t.Error("Expected string(bonsoir je marche), got", res[3])
 	}
 
+	res, err = Lex("axis 1 0.2 .5")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(res) != 4 {
+		t.Error("Expected 4, got", len(res))
+		t.Log(res)
+	}
+	if res[1].Type != NumberType || res[1].Literal != "1" {
+		t.Error("Expected number(1), got", res[1])
+	}
+	if res[2].Type != NumberType || res[2].Literal != "0.2" {
+		t.Error("Expected number(0.2), got", res[2])
+	}
+	if res[3].Type != NumberType || res[3].Literal != "0.5" {
+		t.Error("Expected number(0.5), got", res[3])
+	}
+
+	res, err = Lex("axis $hello")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(res) != 2 {
+		t.Error("Expected 2, got", len(res))
+		t.Log(res)
+	}
+	if res[1].Type != VariableType || res[1].Literal != "hello" {
+		t.Error("Expected variable(hello), got", res[1])
+	}
+
+	res, err = Lex("axis x")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(res) != 2 {
+		t.Error("Expected 2, got", len(res))
+		t.Log(res)
+	}
+	if res[1].Type != LiteralType || res[1].Literal != "x" {
+		t.Error("Expected literal(x), got", res[1])
+	}
+
 	res, err = Lex("axis (1 2 3 4)")
 	if err != nil {
 		t.Fatal(err)
@@ -133,6 +175,21 @@ func TestLexLiteral(t *testing.T) {
 	}
 	if res[6].Type != WeakDelimiterType || res[6].Literal != ")" {
 		t.Error("Expected delimiter()), got", res[6])
+	}
+
+	res, err = Lex("axis [1 2 3 4]")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(res) != 7 {
+		t.Error("Expected 7, got", len(res))
+		t.Log(res)
+	}
+	if res[1].Type != WeakDelimiterType || res[1].Literal != "[" {
+		t.Error("Expected delimiter([), got", res[1])
+	}
+	if res[6].Type != WeakDelimiterType || res[6].Literal != "]" {
+		t.Error("Expected delimiter(]), got", res[1])
 	}
 }
 
