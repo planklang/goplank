@@ -229,7 +229,11 @@ func genErrorMessage(err error, i int, words []string, line int) string {
 	title := " Parsing error! "
 	displayLine := fmt.Sprintf(" (line %d)", line+1)
 	after := ""
-	size := l2 - len(title) + len(displayLine)
+	maxErrorSize := 0
+	for _, l := range strings.Split(err.Error(), "\n") {
+		maxErrorSize = max(maxErrorSize, len(l))
+	}
+	size := max(maxErrorSize, l2+len(displayLine)) - len(title)
 	if size > 0 {
 		for n := range size {
 			if n%2 == 0 {
