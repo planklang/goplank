@@ -13,7 +13,7 @@ type LexType string
 const (
 	KeywordType            LexType = "keyword"
 	LiteralType            LexType = "literal"
-	DelimiterType          LexType = "delimiter"
+	WeakDelimiterType      LexType = "weak_delimiter"
 	PropertyDelimiterType  LexType = "property_delimiter"
 	FigureDelimiterType    LexType = "figure_delimiter"
 	StatementDelimiterType LexType = "statement_delimiter"
@@ -30,6 +30,7 @@ var (
 	keywords            = []string{"plot", "default", "overwrite", "ow", "axis"}
 	propertyDelimiters  = []string{"|"}
 	statementDelimiters = []string{";;"}
+	weakDelimiters      = []string{"(", ")", "[", "]"}
 
 	ErrStatementExcepted = fmt.Errorf("statement excepted")
 	ErrInvalidExpression = fmt.Errorf("invalid expression")
@@ -88,7 +89,7 @@ func Lex(content string) ([]*Lexer, error) {
 				lexs = append(lexs, &Lexer{IdentifierType, word})
 				identifierAdded = true
 			} else {
-				ls, err := parseLiteral(word, &i, words)
+				ls, err := parseLiteral(&i, words)
 				if err != nil {
 					fmt.Println(genErrorMessage(err, i-1, words, ln)) // i-1 because every error here leads to i == len(words)
 					return nil, err
@@ -104,7 +105,11 @@ func Lex(content string) ([]*Lexer, error) {
 	return lexs, nil
 }
 
-func parseLiteral(word string, i *int, words []string) ([]*Lexer, error) {
+func parseLiteral(i *int, words []string) ([]*Lexer, error) {
+	word := words[*i]
+	if isDigit(word) {
+		return []*Lexer{{NumberType, word}}, nil
+	}
 	f := word[0]
 	switch f {
 	case '$':
@@ -133,25 +138,47 @@ func parseLiteral(word string, i *int, words []string) ([]*Lexer, error) {
 			return nil, errors.Join(ErrInvalidExpression, fmt.Errorf("string is not finished"))
 		}
 		return []*Lexer{{StringType, s[:len(s)-1]}}, nil
-	case '(', ')', '[', ']':
-		var lexs []*Lexer
-		lexs = append(lexs, &Lexer{DelimiterType, string(f)})
-		if len(word) == 1 {
-			*i++
-			return lexs, nil
-		}
-		ls, err := parseLiteral(word[1:], i, words)
-		if err != nil {
-			return nil, err
-		}
-		lexs = append(lexs, ls...)
-		return lexs, nil
 	}
-	_, err := strconv.ParseFloat(word, 64)
-	if err != nil {
-		return []*Lexer{{LiteralType, word}}, nil
+
+	var lexs []*Lexer
+
+	var precType LexType
+	content := ""
+	isDecimal := false
+	acceptContent := true
+
+	fnUpdate := func(newType LexType) {
+		if precType == newType {
+			return
+		}
+		if precType != "" {
+			if precType != WeakDelimiterType {
+				acceptContent = false
+			}
+			lexs = append(lexs, &Lexer{precType, content})
+		}
+		content = ""
+		precType = newType
 	}
-	return []*Lexer{{NumberType, word}}, nil
+
+	for _, c := range []rune(word) {
+		if slices.Contains(weakDelimiters, string(c)) {
+			fnUpdate(WeakDelimiterType)
+		} else if !acceptContent {
+			return nil, errors.Join(ErrInvalidExpression, fmt.Errorf("cannot parse %s", word))
+		} else if isDigit(string(c)) || (c == '.' && !isDecimal) {
+			isDecimal = c == '.'
+			if content == "" {
+				content += "0" // turns .5 into 0.5
+			}
+			fnUpdate(NumberType)
+		} else {
+			fnUpdate(LiteralType)
+		}
+		content += string(c)
+	}
+
+	return append(lexs, &Lexer{precType, content}), nil
 }
 
 func genErrorMessage(err error, i int, words []string, line int) string {
@@ -180,7 +207,7 @@ func genErrorMessage(err error, i int, words []string, line int) string {
 			s += "-"
 		}
 	}
-	return fmt.Sprintf("%s (line %d)\n\n%s", s, line+1, err.Error())
+	return fmt.Sprintf("=== Parsing error! ===\n\n%s (line %d)\n\n%s\n\n", s, line+1, err.Error())
 }
 
 func isDelimiter(word string) (bool, LexType) {
@@ -193,4 +220,9 @@ func isDelimiter(word string) (bool, LexType) {
 		return true, FigureDelimiterType
 	}
 	return false, ""
+}
+
+func isDigit(word string) bool {
+	_, err := strconv.ParseFloat(word, 64)
+	return err == nil
 }

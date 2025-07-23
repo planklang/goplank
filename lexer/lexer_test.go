@@ -116,7 +116,7 @@ func TestLexLiteral(t *testing.T) {
 		t.Error("Expected 7, got", len(res))
 		t.Log(res)
 	}
-	if res[1].Type != DelimiterType || res[1].Literal != "(" {
+	if res[1].Type != WeakDelimiterType || res[1].Literal != "(" {
 		t.Error("Expected delimiter((), got", res[1])
 	}
 	if res[2].Type != NumberType || res[2].Literal != "1" {
@@ -131,7 +131,7 @@ func TestLexLiteral(t *testing.T) {
 	if res[5].Type != NumberType || res[5].Literal != "4" {
 		t.Error("Expected number(4), got", res[5])
 	}
-	if res[6].Type != DelimiterType || res[6].Literal != ")" {
+	if res[6].Type != WeakDelimiterType || res[6].Literal != ")" {
 		t.Error("Expected delimiter()), got", res[6])
 	}
 }
