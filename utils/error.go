@@ -37,7 +37,7 @@ func GenErrorMessage(global string, err error, i int, words []string, line int) 
 		after += "="
 	}
 	s += "\n"
-	if i == len(words)-1 {
+	if i == len(words)-1 && i != 0 {
 		for range l2 - 1 {
 			s += "-"
 		}
