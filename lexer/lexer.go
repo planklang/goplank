@@ -191,10 +191,26 @@ func genErrorMessage(err error, i int, words []string, line int) string {
 	for j := range len(words) - i - 1 {
 		s += " " + words[j+i+1]
 	}
-	l2 := len(s) - 1
+	l2 := len(s)
+	title := " Parsing error! "
+	displayLine := fmt.Sprintf(" (line %d)", line+1)
+	after := ""
+	size := l2 - len(title) + len(displayLine)
+	if size > 0 {
+		for n := range size {
+			if n%2 == 0 {
+				title = "=" + title
+			} else {
+				title += "="
+			}
+		}
+	}
+	for range len(title) {
+		after += "="
+	}
 	s += "\n"
 	if i == len(words)-1 {
-		for range l2 {
+		for range l2 - 1 {
 			s += "-"
 		}
 		s += "^"
@@ -203,11 +219,11 @@ func genErrorMessage(err error, i int, words []string, line int) string {
 			s += "-"
 		}
 		s += "^"
-		for range l2 - l1 {
+		for range l2 - l1 - 1 {
 			s += "-"
 		}
 	}
-	return fmt.Sprintf("=== Parsing error! ===\n\n%s (line %d)\n\n%s\n\n", s, line+1, err.Error())
+	return fmt.Sprintf("%s\n%s%s\n\n%s\n%s\n\n", title, s, displayLine, err.Error(), after)
 }
 
 func isDelimiter(word string) (bool, LexType) {
