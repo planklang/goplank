@@ -102,12 +102,12 @@ func Lex(content string) ([]*Lexer, error) {
 		}
 		if parenthesisCounter != 0 {
 			err := errors.Join(ErrInvalidExpression, fmt.Errorf("missing )"))
-			fmt.Println(genErrorMessage(err, i, words, ln))
+			fmt.Println(genErrorMessage(err, i-1, words, ln))
 			return nil, err
 		}
 		if squareBracketsCounter != 0 {
 			err := errors.Join(ErrInvalidExpression, fmt.Errorf("missing ]"))
-			fmt.Println(genErrorMessage(err, i, words, ln))
+			fmt.Println(genErrorMessage(err, i-1, words, ln))
 			return nil, err
 		}
 		delimiterAdded = false

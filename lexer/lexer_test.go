@@ -225,4 +225,36 @@ func TestLexError(t *testing.T) {
 	if !errors.Is(err, ErrInvalidExpression) {
 		t.Error("Expected ErrInvalidExpression, got", err)
 	}
+
+	res, err = Lex("axis (5 .2")
+	if err == nil {
+		t.Error("Expected error, got ", res)
+	}
+	if !errors.Is(err, ErrInvalidExpression) {
+		t.Error("Expected ErrInvalidExpression, got", err)
+	}
+
+	res, err = Lex("axis 5 .2)")
+	if err == nil {
+		t.Error("Expected error, got ", res)
+	}
+	if !errors.Is(err, ErrInvalidExpression) {
+		t.Error("Expected ErrInvalidExpression, got", err)
+	}
+
+	res, err = Lex("axis [5 .2")
+	if err == nil {
+		t.Error("Expected error, got ", res)
+	}
+	if !errors.Is(err, ErrInvalidExpression) {
+		t.Error("Expected ErrInvalidExpression, got", err)
+	}
+
+	res, err = Lex("axis 5 .2]")
+	if err == nil {
+		t.Error("Expected error, got ", res)
+	}
+	if !errors.Is(err, ErrInvalidExpression) {
+		t.Error("Expected ErrInvalidExpression, got", err)
+	}
 }
