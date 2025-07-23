@@ -55,6 +55,8 @@ func Lex(content string) ([]*Lexer, error) {
 	for ln, line := range lines {
 		i := 0
 		words := strings.Fields(line)
+		parenthesisCounter := 0
+		squareBracketsCounter := 0
 		for i < len(words) && words[i][0] != '#' { // skip comments
 			word := words[i]
 			isDelim, typ := isDelimiter(word)
@@ -89,7 +91,7 @@ func Lex(content string) ([]*Lexer, error) {
 				lexs = append(lexs, &Lexer{IdentifierType, word})
 				identifierAdded = true
 			} else {
-				ls, err := parseLiteral(&i, words)
+				ls, err := parseLiteral(&i, words, &parenthesisCounter, &squareBracketsCounter)
 				if err != nil {
 					fmt.Println(genErrorMessage(err, i, words, ln)) // i-1 because every error here leads to i == len(words)
 					return nil, err
@@ -98,6 +100,16 @@ func Lex(content string) ([]*Lexer, error) {
 			}
 			i++
 		}
+		if parenthesisCounter != 0 {
+			err := errors.Join(ErrInvalidExpression, fmt.Errorf("missing )"))
+			fmt.Println(genErrorMessage(err, i, words, ln))
+			return nil, err
+		}
+		if squareBracketsCounter != 0 {
+			err := errors.Join(ErrInvalidExpression, fmt.Errorf("missing ]"))
+			fmt.Println(genErrorMessage(err, i, words, ln))
+			return nil, err
+		}
 		delimiterAdded = false
 		inProperty = false
 		identifierAdded = false
@@ -105,7 +117,7 @@ func Lex(content string) ([]*Lexer, error) {
 	return lexs, nil
 }
 
-func parseLiteral(i *int, words []string) ([]*Lexer, error) {
+func parseLiteral(i *int, words []string, parenthesisCounter *int, squareBracketsCounter *int) ([]*Lexer, error) {
 	word := words[*i]
 	f := word[0]
 	if isDigit(word) {
@@ -167,6 +179,22 @@ func parseLiteral(i *int, words []string) ([]*Lexer, error) {
 
 	for _, c := range []rune(word) {
 		if slices.Contains(weakDelimiters, string(c)) {
+			switch c {
+			case '(':
+				*parenthesisCounter++
+			case ')':
+				if *parenthesisCounter == 0 {
+					return nil, errors.Join(ErrInvalidExpression, fmt.Errorf("missing ("))
+				}
+				*parenthesisCounter--
+			case '[':
+				*squareBracketsCounter++
+			case ']':
+				if *squareBracketsCounter == 0 {
+					return nil, errors.Join(ErrInvalidExpression, fmt.Errorf("missing ["))
+				}
+				*squareBracketsCounter--
+			}
 			fnUpdate(WeakDelimiterType)
 		} else if !acceptContent {
 			return nil, errors.Join(ErrInvalidExpression, fmt.Errorf("cannot parse %s", word))
