@@ -8,7 +8,7 @@ import (
 type Statement interface {
 	Eval() error
 	AddModifier(Modifier) error
-	SetArgument(Argument) error
+	SetArgument(*Tuple) error
 	ValidArgument(Type) bool
 	String() string
 }
@@ -32,12 +32,13 @@ func (a *Axis) AddModifier(m Modifier) error {
 	return nil
 }
 
-func (a *Axis) SetArgument(arg Argument) error {
+func (a *Axis) SetArgument(arg *Tuple) error {
 	if !a.ValidArgument(arg.Type()) {
 		return errors.Join(ErrInvalidArgument, fmt.Errorf("cannot apply argument %s to statement %s", arg, a))
 	}
-	a.Target = arg.Values[0].Value().(string) // inferred by ValidArgument
-	for _, v := range arg.Values {
+	values := arg.Value().([]Value)       // inferred by Tuple type
+	a.Target = values[0].Value().(string) // inferred by ValidArgument
+	for _, v := range values {
 		switch v.Type() {
 		case StringType:
 			a.Label = v.Value().(string) // inferred by ValidArgument

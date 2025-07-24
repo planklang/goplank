@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/planklang/goplank/lexer"
+	"strconv"
 )
 
 type AstType uint
@@ -47,20 +48,23 @@ func Parse(lex []*lexer.Lexer) (*Ast, error) {
 	var stmt Statement
 	var modif Modifier
 	inModifier := false
+	tuple := new(Tuple)
 	for _, l := range lex {
 		switch l.Type {
 		case lexer.StatementDelimiterType:
+			if stmt == nil {
+				return nil, errors.Join(ErrInternal, fmt.Errorf("statement is nil but modifier finished"))
+			}
+			var err error
 			if inModifier {
-				if stmt == nil {
-					return nil, errors.Join(ErrInternal, fmt.Errorf("statement is nil but modifier finished"))
-				}
-				if err := stmt.AddModifier(modif); err != nil {
-					return nil, err
-				}
+				err = stmt.AddModifier(modif)
+			} else {
+				err = stmt.SetArgument(tuple)
 			}
-			if stmt != nil {
-				tree.Body = append(tree.Body, stmt)
+			if err != nil {
+				return nil, err
 			}
+			tree.Body = append(tree.Body, stmt)
 		case lexer.KeywordType:
 			switch l.Literal {
 			case "axis":
@@ -73,8 +77,17 @@ func Parse(lex []*lexer.Lexer) (*Ast, error) {
 				return nil, errors.Join(ErrInternal, fmt.Errorf("statement is nil but modifier started"))
 			}
 			if inModifier {
-				//TODO: add arguments
+				if modif == nil {
+					return nil, errors.Join(ErrInternal, fmt.Errorf("modif is nil but modifier was finished"))
+				}
+				if err := modif.SetArgument(tuple); err != nil {
+					return nil, err
+				}
 				if err := stmt.AddModifier(modif); err != nil {
+					return nil, err
+				}
+			} else {
+				if err := stmt.SetArgument(tuple); err != nil {
 					return nil, err
 				}
 			}
@@ -87,7 +100,7 @@ func Parse(lex []*lexer.Lexer) (*Ast, error) {
 				return nil, errors.Join(ErrInternal, fmt.Errorf("identifier received but not in modifier or modif is not nil"))
 			}
 		default:
-			err := parseLiteral(l)
+			err := parseLiteral(l, tuple)
 			if err != nil {
 				return nil, err
 			}
@@ -96,13 +109,28 @@ func Parse(lex []*lexer.Lexer) (*Ast, error) {
 	return tree, nil
 }
 
-func parseLiteral(lex *lexer.Lexer) error {
+func parseLiteral(lex *lexer.Lexer, tuple *Tuple) error {
 	switch lex.Type {
 	case lexer.LiteralType:
+		tuple.AddValue(Literal(lex.Literal))
 	case lexer.VariableType:
+		//TODO: handle
 	case lexer.StringType:
+		tuple.AddValue(String(lex.Literal))
 	case lexer.IntType:
+		i, err := strconv.ParseInt(lex.Literal, 10, 64)
+		if err != nil {
+			return err
+		}
+		tuple.AddValue(Int(i))
 	case lexer.FloatType:
+		f, err := strconv.ParseFloat(lex.Literal, 64)
+		if err != nil {
+			return err
+		}
+		tuple.AddValue(Float(f))
+	case lexer.WeakDelimiterType:
+		//TODO: handle
 	default:
 		return errors.Join(ErrUnknownValue, fmt.Errorf("unsupported lex type %s", lex.Type))
 	}
