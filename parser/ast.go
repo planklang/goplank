@@ -112,7 +112,7 @@ func Parse(lex []*lexer.Lexer) (*Ast, error) {
 func parseLiteral(lex *lexer.Lexer, tuple *Tuple) error {
 	switch lex.Type {
 	case lexer.LiteralType:
-		tuple.AddValue(Literal(lex.Literal))
+		tuple.AddValue(NewDefaultLiteral(lex.Literal))
 	case lexer.VariableType:
 		//TODO: handle
 	case lexer.StringType:

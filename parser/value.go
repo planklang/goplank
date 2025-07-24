@@ -23,14 +23,25 @@ func (t *Tuple) AddValue(v Value) {
 	*t = append(*t, v)
 }
 
-type Literal string
+type Literal struct {
+	string
+	t Type
+}
+
+func NewLiteral(s string, t Type) Literal {
+	return Literal{s, t}
+}
+
+func NewDefaultLiteral(s string) Literal {
+	return NewLiteral(s, DefaultLiteralType)
+}
 
 func (v Literal) Type() Type {
-	return DefaultLiteralType
+	return v.t
 }
 
 func (v Literal) Value() interface{} {
-	return string(v)
+	return v.string
 }
 
 type String string
