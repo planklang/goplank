@@ -115,6 +115,9 @@ func Lex(content string) ([]*Lexer, error) {
 		inProperty = false
 		modifierAdded = false
 	}
+	for lexs[len(lexs)-1].Type == StatementDelimiterType {
+		lexs = lexs[:len(lexs)-1] // remove useless statement delimiter
+	}
 	return lexs, nil
 }
 

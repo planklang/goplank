@@ -94,6 +94,15 @@ func TestLex(t *testing.T) {
 	if res[2].Type != KeywordType || res[2].Literal != "axis" {
 		t.Error("Expected keyword(color), got", res[2])
 	}
+
+	res, err = Lex("axis ;;")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(res) != 1 {
+		t.Error("Expected 1, got", len(res))
+		t.Log(res)
+	}
 }
 
 func TestLexLiteral(t *testing.T) {
