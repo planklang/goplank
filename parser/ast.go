@@ -53,6 +53,9 @@ func Parse(lex []*lexer.Lexer) (*Ast, error) {
 	tuple := new(types.Tuple)
 	for _, l := range lex {
 		switch l.Type {
+		case lexer.FigureDelimiterType:
+			//TODO: handle
+			fmt.Println("Figure delimiter not supported yet")
 		case lexer.StatementDelimiterType:
 			if stmt == nil {
 				return nil, errors.Join(ErrInternal, fmt.Errorf("statement is nil but statement finished"))
