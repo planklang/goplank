@@ -4,7 +4,7 @@ import "fmt"
 
 type Value interface {
 	Type() Type
-	Value() interface{}
+	Value() any
 }
 
 type ValueContainer interface {
@@ -23,7 +23,7 @@ func (t *Tuple) Type() Type {
 	return NewTupleType(typs...)
 }
 
-func (t *Tuple) Value() interface{} {
+func (t *Tuple) Value() any {
 	return t.GetValues()
 }
 
@@ -45,7 +45,7 @@ func (l *List) Type() Type {
 	return NewListType((*l)[0].Type()) // if the list is empty, the program crashes
 }
 
-func (l *List) Value() interface{} {
+func (l *List) Value() any {
 	return l.GetValues()
 }
 
@@ -90,7 +90,7 @@ func (v Literal) Type() Type {
 	return v.t
 }
 
-func (v Literal) Value() interface{} {
+func (v Literal) Value() any {
 	return v.string
 }
 
@@ -100,7 +100,7 @@ func (v String) Type() Type {
 	return StringType
 }
 
-func (v String) Value() interface{} {
+func (v String) Value() any {
 	return string(v)
 }
 
@@ -110,7 +110,7 @@ func (v Int) Type() Type {
 	return IntType
 }
 
-func (v Int) Value() interface{} {
+func (v Int) Value() any {
 	return int(v)
 }
 
@@ -120,6 +120,6 @@ func (v Float) Type() Type {
 	return FloatType
 }
 
-func (v Float) Value() interface{} {
+func (v Float) Value() any {
 	return float64(v)
 }
