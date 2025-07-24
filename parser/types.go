@@ -60,6 +60,10 @@ func (t *TupleType) String() string {
 	return "(" + strings.Join(tNames, ", ") + ")"
 }
 
+func NewTupleType(types ...Type) *TupleType {
+	return &TupleType{types}
+}
+
 type ListType struct {
 	t Type
 }
@@ -72,4 +76,8 @@ func (t *ListType) Is(other Type) bool {
 
 func (t *ListType) String() string {
 	return "[" + t.t.String() + "]"
+}
+
+func NewListType(tpe Type) *ListType {
+	return &ListType{tpe}
 }
