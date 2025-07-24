@@ -14,9 +14,10 @@ const (
 )
 
 var (
-	ErrUnknownType     = errors.New("unknown type")
+	ErrUnknownValue    = errors.New("unknown value")
 	ErrInternal        = errors.New("internal error")
 	ErrInvalidModifier = errors.New("invalid modifier")
+	ErrInvalidArgument = errors.New("invalid argument")
 )
 
 type Ast struct {
@@ -51,7 +52,7 @@ func Parse(lex []*lexer.Lexer) (*Ast, error) {
 		case lexer.StatementDelimiterType:
 			if inModifier {
 				if stmt == nil {
-					return nil, errors.Join(ErrInternal, fmt.Errorf("statement is nil but Modifier finished"))
+					return nil, errors.Join(ErrInternal, fmt.Errorf("statement is nil but modifier finished"))
 				}
 				if err := stmt.AddModifier(modif); err != nil {
 					return nil, err
@@ -61,15 +62,17 @@ func Parse(lex []*lexer.Lexer) (*Ast, error) {
 				tree.Body = append(tree.Body, stmt)
 			}
 		case lexer.KeywordType:
-			//TODO: create statement
+			switch l.Literal {
+			case "axis":
+				stmt = new(Axis)
+			default:
+				return nil, errors.Join(ErrUnknownValue, fmt.Errorf("unsupported keyword %s", l.Literal))
+			}
 		case lexer.ModifierDelimiterType:
 			if stmt == nil {
-				return nil, errors.Join(ErrInternal, fmt.Errorf("statement is nil but Modifier started"))
+				return nil, errors.Join(ErrInternal, fmt.Errorf("statement is nil but modifier started"))
 			}
 			if inModifier {
-				if !modif.ValidStatement(stmt) {
-					return nil, errors.Join(ErrInvalidModifier, fmt.Errorf("cannot apply modifier %s to statement %s", modif, stmt))
-				}
 				//TODO: add arguments
 				if err := stmt.AddModifier(modif); err != nil {
 					return nil, err
@@ -80,10 +83,28 @@ func Parse(lex []*lexer.Lexer) (*Ast, error) {
 		case lexer.IdentifierType:
 			if inModifier && modif == nil {
 				//TODO: create modifier
+			} else {
+				return nil, errors.Join(ErrInternal, fmt.Errorf("identifier received but not in modifier or modif is not nil"))
 			}
 		default:
-			return nil, errors.Join(ErrUnknownType, fmt.Errorf("unsupported lex type %s", l.Type))
+			err := parseLiteral(l)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 	return tree, nil
+}
+
+func parseLiteral(lex *lexer.Lexer) error {
+	switch lex.Type {
+	case lexer.LiteralType:
+	case lexer.VariableType:
+	case lexer.StringType:
+	case lexer.IntType:
+	case lexer.FloatType:
+	default:
+		return errors.Join(ErrUnknownValue, fmt.Errorf("unsupported lex type %s", lex.Type))
+	}
+	return nil
 }

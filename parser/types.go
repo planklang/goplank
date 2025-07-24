@@ -8,9 +8,10 @@ type Type interface {
 }
 
 const (
-	stringLiteral = "string"
-	intLiteral    = "int"
-	floatLiteral  = "float"
+	stringLiteral  = "string"
+	defaultLiteral = "default"
+	intLiteral     = "int"
+	floatLiteral   = "float"
 )
 
 type LiteralType struct {
@@ -27,9 +28,10 @@ func (t *LiteralType) String() string {
 }
 
 var (
-	StringType = &LiteralType{stringLiteral}
-	IntType    = &LiteralType{intLiteral}
-	FloatType  = &LiteralType{floatLiteral}
+	StringType         = &LiteralType{stringLiteral}
+	DefaultLiteralType = &LiteralType{defaultLiteral}
+	IntType            = &LiteralType{intLiteral}
+	FloatType          = &LiteralType{floatLiteral}
 )
 
 type TupleType struct {

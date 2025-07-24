@@ -2,8 +2,8 @@ package parser
 
 type Modifier interface {
 	Modify(Statement) error
-	AddArgument(*Argument) error
-	ValidArg(Type) bool
+	SetArgument(*Argument) error
+	ValidArgument(Type) bool
 	ValidStatement(Statement) bool
 	String() string
 }
