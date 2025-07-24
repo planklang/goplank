@@ -101,7 +101,7 @@ func Parse(lex []*lexer.Lexer) (*Ast, error) {
 			}
 			inModifier = true
 			modif = nil
-		case lexer.IdentifierType:
+		case lexer.ModifierType:
 			if inModifier && modif == nil {
 				switch l.Literal {
 				case "color":

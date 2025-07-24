@@ -17,7 +17,7 @@ const (
 	ModifierDelimiterType  LexType = "modifier_delimiter"
 	FigureDelimiterType    LexType = "figure_delimiter"
 	StatementDelimiterType LexType = "statement_delimiter"
-	IdentifierType         LexType = "identifier"
+	ModifierType           LexType = "modifier"
 	VariableType           LexType = "variable"
 	StringType             LexType = "string"
 	IntType                LexType = "int"
@@ -52,7 +52,7 @@ func Lex(content string) ([]*Lexer, error) {
 	delimiterAdded := true
 	inStatement := false
 	inProperty := false
-	identifierAdded := false
+	modifierAdded := false
 	for ln, line := range lines {
 		i := 0
 		words := strings.Fields(line)
@@ -64,14 +64,14 @@ func Lex(content string) ([]*Lexer, error) {
 			if !delimiterAdded && i == 0 && !isDelim { // implicit delimiter
 				inStatement = false
 				inProperty = false
-				identifierAdded = false
+				modifierAdded = false
 				delimiterAdded = false
 				lexs = append(lexs, &Lexer{StatementDelimiterType, ImplicitDelimiter})
 			}
 			if isDelim {
 				inStatement = false
 				inProperty = false
-				identifierAdded = false
+				modifierAdded = false
 				delimiterAdded = true
 				if typ == FigureDelimiterType {
 					lexs = append(lexs, &Lexer{typ, FigureDelimiter})
@@ -88,9 +88,9 @@ func Lex(content string) ([]*Lexer, error) {
 			} else if !inStatement {
 				fmt.Println(genErrorMessage(ErrStatementExcepted, i, words, ln))
 				return nil, ErrStatementExcepted
-			} else if !identifierAdded && inProperty {
-				lexs = append(lexs, &Lexer{IdentifierType, word})
-				identifierAdded = true
+			} else if !modifierAdded && inProperty {
+				lexs = append(lexs, &Lexer{ModifierType, word})
+				modifierAdded = true
 			} else {
 				ls, err := parseLiteral(&i, words, &parenthesisCounter, &squareBracketsCounter)
 				if err != nil {
@@ -113,7 +113,7 @@ func Lex(content string) ([]*Lexer, error) {
 		}
 		delimiterAdded = false
 		inProperty = false
-		identifierAdded = false
+		modifierAdded = false
 	}
 	return lexs, nil
 }
