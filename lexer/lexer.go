@@ -3,7 +3,7 @@ package lexer
 import (
 	"errors"
 	"fmt"
-	"github.com/planklang/goplank/utils"
+	"github.com/planklang/goplank/errorshelper"
 	"slices"
 	"strconv"
 	"strings"
@@ -178,7 +178,7 @@ func parseLiteral(i *int, words []string, parenthesisCounter *int, squareBracket
 		precType = newType
 	}
 
-	for _, c := range []rune(word) {
+	for _, c := range word {
 		if slices.Contains(weakDelimiters, string(c)) {
 			switch c {
 			case '(':
@@ -217,7 +217,7 @@ func parseLiteral(i *int, words []string, parenthesisCounter *int, squareBracket
 }
 
 func genErrorMessage(err error, i int, words []string, line int) string {
-	return utils.GenErrorMessage("Parsing error!", err, i, words, line)
+	return errorshelper.GenErrorMessage("Parsing error!", err, i, words, line)
 }
 
 func isDelimiter(word string) (bool, LexType) {

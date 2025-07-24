@@ -1,4 +1,4 @@
-package utils
+package errorshelper
 
 import (
 	"fmt"
@@ -20,7 +20,7 @@ func GenErrorMessage(global string, err error, i int, words []string, line int) 
 	displayLine := fmt.Sprintf(" (line %d)", line+1)
 	after := ""
 	maxErrorSize := 0
-	for _, l := range strings.Split(err.Error(), "\n") {
+	for l := range strings.SplitSeq(err.Error(), "\n") {
 		maxErrorSize = max(maxErrorSize, len(l))
 	}
 	size := max(maxErrorSize, l2+len(displayLine)) - len(title)
