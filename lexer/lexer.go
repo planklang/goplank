@@ -46,7 +46,7 @@ func (lex *Lexer) String() string {
 	return fmt.Sprintf("%s(%s)", lex.Type, lex.Literal)
 }
 
-func Lex(content string) ([]*Lexer, error) {
+func Lex(content string) (*TokenList, error) {
 	var lexs []*Lexer
 	lines := strings.Split(content, "\n")
 	delimiterAdded := true
@@ -118,7 +118,7 @@ func Lex(content string) ([]*Lexer, error) {
 	for lexs[len(lexs)-1].Type == StatementDelimiterType {
 		lexs = lexs[:len(lexs)-1] // remove useless statement delimiter
 	}
-	return lexs, nil
+	return &TokenList{list: lexs, index: 0}, nil
 }
 
 func parseLiteral(i *int, words []string, parenthesisCounter *int, squareBracketsCounter *int) ([]*Lexer, error) {
