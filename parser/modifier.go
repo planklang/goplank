@@ -28,7 +28,7 @@ func (c *ModifierColor) SetArgument(t *types.Tuple) error {
 	if !c.ValidArgument(t.Type()) {
 		return errors.Join(ErrInvalidModifier, fmt.Errorf("cannot apply argument %v to modifier %s", t, c))
 	}
-	val := t.Value().([]types.Value) // inferred by Tuple type
+	val := t.GetValues()
 	c.RGBA = &color.RGBA{
 		R: uint8(val[0].Value().(int)),                       // inferred by ValidArgument
 		G: uint8(val[1].Value().(int)),                       // inferred by ValidArgument

@@ -46,6 +46,7 @@ func (a *Ast) String() string {
 
 func Parse(lex []*lexer.Lexer) (*Ast, error) {
 	tree := new(Ast)
+	tree.Type = AstTypeDefault
 	var stmt Statement
 	var modif Modifier
 	inModifier := false
@@ -124,23 +125,23 @@ func Parse(lex []*lexer.Lexer) (*Ast, error) {
 func parseLiteral(lex *lexer.Lexer, tuple *types.Tuple) error {
 	switch lex.Type {
 	case lexer.LiteralType:
-		tuple.AddValue(types.NewDefaultLiteral(lex.Literal))
+		tuple.AddValues(types.NewDefaultLiteral(lex.Literal))
 	case lexer.VariableType:
 		//TODO: handle
 	case lexer.StringType:
-		tuple.AddValue(types.String(lex.Literal))
+		tuple.AddValues(types.String(lex.Literal))
 	case lexer.IntType:
 		i, err := strconv.ParseInt(lex.Literal, 10, 64)
 		if err != nil {
 			return err
 		}
-		tuple.AddValue(types.Int(i))
+		tuple.AddValues(types.Int(i))
 	case lexer.FloatType:
 		f, err := strconv.ParseFloat(lex.Literal, 64)
 		if err != nil {
 			return err
 		}
-		tuple.AddValue(types.Float(f))
+		tuple.AddValues(types.Float(f))
 	case lexer.WeakDelimiterType:
 		//TODO: handle
 	default:

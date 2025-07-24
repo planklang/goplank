@@ -37,7 +37,7 @@ func (a *Axis) SetArgument(arg *types.Tuple) error {
 	if !a.ValidArgument(arg.Type()) {
 		return errors.Join(ErrInvalidArgument, fmt.Errorf("cannot apply argument %v to statement %s", arg, a))
 	}
-	values := arg.Value().([]types.Value) // inferred by Tuple type
+	values := arg.GetValues()
 	a.Target = values[0].Value().(string) // inferred by ValidArgument
 	for _, v := range values {
 		switch v.Type() {

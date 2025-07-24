@@ -5,6 +5,11 @@ type Value interface {
 	Value() interface{}
 }
 
+type ValueContainer interface {
+	AddValues(...Value)
+	GetValues() []Value
+}
+
 type Tuple []Value
 
 func (t *Tuple) Type() Type {
@@ -16,11 +21,15 @@ func (t *Tuple) Type() Type {
 }
 
 func (t *Tuple) Value() interface{} {
-	return *t
+	return t.GetValues()
 }
 
-func (t *Tuple) AddValue(v Value) {
-	*t = append(*t, v)
+func (t *Tuple) AddValues(v ...Value) {
+	*t = append(*t, v...)
+}
+
+func (t *Tuple) GetValues() []Value {
+	return *t
 }
 
 type Literal struct {
