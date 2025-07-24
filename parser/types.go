@@ -3,7 +3,7 @@ package parser
 import "strings"
 
 type Type interface {
-	IsEqual(other Type) bool
+	Is(Type) bool
 	String() string
 }
 
@@ -17,7 +17,7 @@ type LiteralType struct {
 	t string
 }
 
-func (t *LiteralType) IsEqual(other Type) bool {
+func (t *LiteralType) Is(other Type) bool {
 	otherLiteral, ok := other.(*LiteralType)
 	return ok && t.t == otherLiteral.t
 }
@@ -36,14 +36,14 @@ type TupleType struct {
 	types []Type
 }
 
-func (t *TupleType) IsEqual(other Type) bool {
+func (t *TupleType) Is(other Type) bool {
 	otherTuple, ok := other.(*TupleType)
 	if !ok || (len(t.types) != len(otherTuple.types)) {
 		return false
 	}
 
 	for i := range t.types {
-		if !t.types[i].IsEqual(otherTuple.types[i]) {
+		if !t.types[i].Is(otherTuple.types[i]) {
 			return false
 		}
 	}
@@ -52,22 +52,22 @@ func (t *TupleType) IsEqual(other Type) bool {
 }
 
 func (t *TupleType) String() string {
-	t_names := []string{}
+	var tNames []string
 	for _, x := range t.types {
-		t_names = append(t_names, x.String())
+		tNames = append(tNames, x.String())
 	}
 
-	return "(" + strings.Join(t_names, ", ") + ")"
+	return "(" + strings.Join(tNames, ", ") + ")"
 }
 
 type ListType struct {
 	t Type
 }
 
-func (t *ListType) IsEqual(other Type) bool {
+func (t *ListType) Is(other Type) bool {
 	otherList, ok := other.(*ListType)
 
-	return ok && t.t.IsEqual(otherList.t)
+	return ok && t.t.Is(otherList.t)
 }
 
 func (t *ListType) String() string {
