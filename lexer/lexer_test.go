@@ -71,7 +71,7 @@ func TestLex(t *testing.T) {
 	if res[0].Type != KeywordType || res[0].Literal != "axis" {
 		t.Error("Expected keyword(axis), got", res[0])
 	}
-	if res[1].Type != PropertyDelimiterType || res[1].Literal != "|" {
+	if res[1].Type != ModifierDelimiterType || res[1].Literal != "|" {
 		t.Error("Expected property_delimiter(|), got", res[1])
 	}
 	if res[2].Type != IdentifierType || res[2].Literal != "color" {

@@ -14,7 +14,7 @@ const (
 	KeywordType            LexType = "keyword"
 	LiteralType            LexType = "literal"
 	WeakDelimiterType      LexType = "weak_delimiter"
-	PropertyDelimiterType  LexType = "property_delimiter"
+	ModifierDelimiterType  LexType = "modifier_delimiter"
 	FigureDelimiterType    LexType = "figure_delimiter"
 	StatementDelimiterType LexType = "statement_delimiter"
 	IdentifierType         LexType = "identifier"
@@ -29,7 +29,7 @@ const (
 
 var (
 	keywords            = []string{"plot", "default", "overwrite", "ow", "axis"}
-	propertyDelimiters  = []string{"|"}
+	modifierDelimiters  = []string{"|"}
 	statementDelimiters = []string{";;"}
 	weakDelimiters      = []string{"(", ")", "[", "]"}
 
@@ -77,7 +77,7 @@ func Lex(content string) ([]*Lexer, error) {
 					lexs = append(lexs, &Lexer{typ, FigureDelimiter})
 				} else {
 					lexs = append(lexs, &Lexer{typ, word})
-					if typ == PropertyDelimiterType {
+					if typ == ModifierDelimiterType {
 						inProperty = true
 						inStatement = true
 					}
@@ -236,8 +236,8 @@ func genErrorMessage(err error, i int, words []string, line int) string {
 func isDelimiter(word string) (bool, LexType) {
 	if slices.Contains(statementDelimiters, word) {
 		return true, StatementDelimiterType
-	} else if slices.Contains(propertyDelimiters, word) {
-		return true, PropertyDelimiterType
+	} else if slices.Contains(modifierDelimiters, word) {
+		return true, ModifierDelimiterType
 	}
 	if len(word) >= 3 && word[:3] == "---" && strings.Count(word, "-") == len(word) {
 		return true, FigureDelimiterType

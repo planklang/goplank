@@ -1,5 +1,7 @@
 package parser
 
-type statement interface {
+type Statement interface {
 	Eval() error
+	AddModifier(Modifier) error
+	String() string
 }
