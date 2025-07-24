@@ -51,31 +51,37 @@ func Parse(lex []*lexer.Lexer) (*Ast, error) {
 	var modif Modifier
 	inModifier := false
 	tuple := new(types.Tuple)
+	updateStatement := func() error {
+		if stmt == nil {
+			return errors.Join(ErrInternal, fmt.Errorf("statement is nil but statement finished"))
+		}
+		var err error
+		if inModifier {
+			if modif == nil {
+				return errors.Join(ErrInternal, fmt.Errorf("modif is nil but statement finished"))
+			}
+			if err = modif.SetArgument(tuple); err != nil {
+				return err
+			}
+			err = stmt.AddModifier(modif)
+		} else {
+			err = stmt.SetArgument(tuple)
+		}
+		if err != nil {
+			return err
+		}
+		tree.Body = append(tree.Body, stmt)
+		return nil
+	}
 	for _, l := range lex {
 		switch l.Type {
 		case lexer.FigureDelimiterType:
 			//TODO: handle
 			fmt.Println("Figure delimiter not supported yet")
 		case lexer.StatementDelimiterType:
-			if stmt == nil {
-				return nil, errors.Join(ErrInternal, fmt.Errorf("statement is nil but statement finished"))
-			}
-			var err error
-			if inModifier {
-				if modif == nil {
-					return nil, errors.Join(ErrInternal, fmt.Errorf("modif is nil but statement finished"))
-				}
-				if err = modif.SetArgument(tuple); err != nil {
-					return nil, err
-				}
-				err = stmt.AddModifier(modif)
-			} else {
-				err = stmt.SetArgument(tuple)
-			}
-			if err != nil {
+			if err := updateStatement(); err != nil {
 				return nil, err
 			}
-			tree.Body = append(tree.Body, stmt)
 		case lexer.KeywordType:
 			switch l.Literal {
 			case "axis":
@@ -121,6 +127,9 @@ func Parse(lex []*lexer.Lexer) (*Ast, error) {
 				return nil, err
 			}
 		}
+	}
+	if err := updateStatement(); err != nil {
+		return nil, err
 	}
 	return tree, nil
 }
