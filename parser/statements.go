@@ -3,13 +3,14 @@ package parser
 import (
 	"errors"
 	"fmt"
+	"github.com/planklang/goplank/parser/types"
 )
 
 type Statement interface {
 	Eval() error
 	AddModifier(Modifier) error
-	SetArgument(*Tuple) error
-	ValidArgument(Type) bool
+	SetArgument(*types.Tuple) error
+	ValidArgument(types.Type) bool
 	String() string
 }
 
@@ -32,17 +33,17 @@ func (a *Axis) AddModifier(m Modifier) error {
 	return nil
 }
 
-func (a *Axis) SetArgument(arg *Tuple) error {
+func (a *Axis) SetArgument(arg *types.Tuple) error {
 	if !a.ValidArgument(arg.Type()) {
 		return errors.Join(ErrInvalidArgument, fmt.Errorf("cannot apply argument %s to statement %s", arg, a))
 	}
-	values := arg.Value().([]Value)       // inferred by Tuple type
+	values := arg.Value().([]types.Value) // inferred by Tuple types
 	a.Target = values[0].Value().(string) // inferred by ValidArgument
 	for _, v := range values {
 		switch v.Type() {
-		case StringType:
+		case types.StringType:
 			a.Label = v.Value().(string) // inferred by ValidArgument
-		case NewListType(FloatType):
+		case types.NewListType(types.FloatType):
 			vl := v.Value().([]float64) // inferred by ValidArgument
 			if len(vl) != 2 {
 				return errors.Join(ErrInvalidArgument, fmt.Errorf("invalid length for range %v", vl))
@@ -53,13 +54,13 @@ func (a *Axis) SetArgument(arg *Tuple) error {
 	return nil
 }
 
-func (a *Axis) ValidArgument(t Type) bool {
-	valids := []Type{
-		NewTupleType(DefaultLiteralType),
-		NewTupleType(DefaultLiteralType, NewListType(FloatType)),
-		NewTupleType(DefaultLiteralType, StringType),
-		NewTupleType(DefaultLiteralType, NewListType(FloatType), StringType),
-		NewTupleType(DefaultLiteralType, StringType, NewListType(FloatType)),
+func (a *Axis) ValidArgument(t types.Type) bool {
+	valids := []types.Type{
+		types.NewTupleType(types.DefaultLiteralType),
+		types.NewTupleType(types.DefaultLiteralType, types.NewListType(types.FloatType)),
+		types.NewTupleType(types.DefaultLiteralType, types.StringType),
+		types.NewTupleType(types.DefaultLiteralType, types.NewListType(types.FloatType), types.StringType),
+		types.NewTupleType(types.DefaultLiteralType, types.StringType, types.NewListType(types.FloatType)),
 	}
 	for _, v := range valids {
 		if t.Is(v) {

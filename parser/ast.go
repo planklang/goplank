@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/planklang/goplank/lexer"
+	"github.com/planklang/goplank/parser/types"
 	"strconv"
 )
 
@@ -48,7 +49,7 @@ func Parse(lex []*lexer.Lexer) (*Ast, error) {
 	var stmt Statement
 	var modif Modifier
 	inModifier := false
-	tuple := new(Tuple)
+	tuple := new(types.Tuple)
 	for _, l := range lex {
 		switch l.Type {
 		case lexer.StatementDelimiterType:
@@ -109,30 +110,30 @@ func Parse(lex []*lexer.Lexer) (*Ast, error) {
 	return tree, nil
 }
 
-func parseLiteral(lex *lexer.Lexer, tuple *Tuple) error {
+func parseLiteral(lex *lexer.Lexer, tuple *types.Tuple) error {
 	switch lex.Type {
 	case lexer.LiteralType:
-		tuple.AddValue(NewDefaultLiteral(lex.Literal))
+		tuple.AddValue(types.NewDefaultLiteral(lex.Literal))
 	case lexer.VariableType:
 		//TODO: handle
 	case lexer.StringType:
-		tuple.AddValue(String(lex.Literal))
+		tuple.AddValue(types.String(lex.Literal))
 	case lexer.IntType:
 		i, err := strconv.ParseInt(lex.Literal, 10, 64)
 		if err != nil {
 			return err
 		}
-		tuple.AddValue(Int(i))
+		tuple.AddValue(types.Int(i))
 	case lexer.FloatType:
 		f, err := strconv.ParseFloat(lex.Literal, 64)
 		if err != nil {
 			return err
 		}
-		tuple.AddValue(Float(f))
+		tuple.AddValue(types.Float(f))
 	case lexer.WeakDelimiterType:
 		//TODO: handle
 	default:
-		return errors.Join(ErrUnknownValue, fmt.Errorf("unsupported lex type %s", lex.Type))
+		return errors.Join(ErrUnknownValue, fmt.Errorf("unsupported lex types %s", lex.Type))
 	}
 	return nil
 }

@@ -1,4 +1,4 @@
-package parser
+package types
 
 import "testing"
 
@@ -19,11 +19,11 @@ func generalTest(t *testing.T, typs []Type) {
 		for j, t2 := range typs {
 			if i == j {
 				if !typ.Is(t2) {
-					t.Errorf("%s is not a type %s", typ, t2)
+					t.Errorf("%s is not a types %s", typ, t2)
 				}
 			} else {
 				if typ.Is(t2) {
-					t.Errorf("%s is not a type %s", typ, t2)
+					t.Errorf("%s is not a types %s", typ, t2)
 				}
 			}
 		}
