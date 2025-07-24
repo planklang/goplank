@@ -54,10 +54,16 @@ func Parse(lex []*lexer.Lexer) (*Ast, error) {
 		switch l.Type {
 		case lexer.StatementDelimiterType:
 			if stmt == nil {
-				return nil, errors.Join(ErrInternal, fmt.Errorf("statement is nil but modifier finished"))
+				return nil, errors.Join(ErrInternal, fmt.Errorf("statement is nil but statement finished"))
 			}
 			var err error
 			if inModifier {
+				if modif == nil {
+					return nil, errors.Join(ErrInternal, fmt.Errorf("modif is nil but statement finished"))
+				}
+				if err = modif.SetArgument(tuple); err != nil {
+					return nil, err
+				}
 				err = stmt.AddModifier(modif)
 			} else {
 				err = stmt.SetArgument(tuple)
@@ -79,7 +85,7 @@ func Parse(lex []*lexer.Lexer) (*Ast, error) {
 			}
 			if inModifier {
 				if modif == nil {
-					return nil, errors.Join(ErrInternal, fmt.Errorf("modif is nil but modifier was finished"))
+					return nil, errors.Join(ErrInternal, fmt.Errorf("modif is nil but modifier finished"))
 				}
 				if err := modif.SetArgument(tuple); err != nil {
 					return nil, err
@@ -96,7 +102,12 @@ func Parse(lex []*lexer.Lexer) (*Ast, error) {
 			modif = nil
 		case lexer.IdentifierType:
 			if inModifier && modif == nil {
-				//TODO: create modifier
+				switch l.Literal {
+				case "color":
+					modif = &ModifierColor{}
+				default:
+					return nil, errors.Join(ErrUnknownValue, fmt.Errorf("unsupported identifier %s", l.Literal))
+				}
 			} else {
 				return nil, errors.Join(ErrInternal, fmt.Errorf("identifier received but not in modifier or modif is not nil"))
 			}
