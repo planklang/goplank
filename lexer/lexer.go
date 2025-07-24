@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/planklang/goplank/errorshelper"
 	"slices"
-	"strconv"
 	"strings"
 )
 
@@ -21,7 +20,8 @@ const (
 	IdentifierType         LexType = "identifier"
 	VariableType           LexType = "variable"
 	StringType             LexType = "string"
-	NumberType             LexType = "number"
+	IntType                LexType = "int"
+	FloatType              LexType = "float"
 
 	ImplicitDelimiter = "implicit"
 	FigureDelimiter   = "---"
@@ -121,11 +121,17 @@ func Lex(content string) ([]*Lexer, error) {
 func parseLiteral(i *int, words []string, parenthesisCounter *int, squareBracketsCounter *int) ([]*Lexer, error) {
 	word := words[*i]
 	f := word[0]
-	if isDigit(word) {
+	if ok, dec := isDigit(word); ok {
 		if f == '.' {
 			word = "0" + word
 		}
-		return []*Lexer{{NumberType, word}}, nil
+		var typ LexType
+		if dec {
+			typ = FloatType
+		} else {
+			typ = IntType
+		}
+		return []*Lexer{{typ, word}}, nil
 	}
 	switch f {
 	case '$':
@@ -199,14 +205,21 @@ func parseLiteral(i *int, words []string, parenthesisCounter *int, squareBracket
 			fnUpdate(WeakDelimiterType)
 		} else if !acceptContent {
 			return nil, errors.Join(ErrInvalidExpression, fmt.Errorf("cannot parse %s", word))
-		} else if isDigit(string(c)) || (c == '.' && !isDecimal) {
+		} else if ok, dec := isDigit(string(c)); ok && (!dec || !isDecimal) {
 			if !isDecimal {
-				isDecimal = c == '.'
+				isDecimal = dec
 			}
 			if content == "" {
 				content += "0" // turns .5 into 0.5
 			}
-			fnUpdate(NumberType)
+			if isDecimal {
+				if precType == IntType {
+					precType = FloatType
+				}
+				fnUpdate(FloatType)
+			} else {
+				fnUpdate(IntType)
+			}
 		} else {
 			fnUpdate(LiteralType)
 		}
@@ -232,7 +245,18 @@ func isDelimiter(word string) (bool, LexType) {
 	return false, ""
 }
 
-func isDigit(word string) bool {
-	_, err := strconv.ParseFloat(word, 64)
-	return err == nil
+func isDigit(word string) (bool, bool) {
+	isDecimal := false
+	for _, c := range word {
+		if c == '.' {
+			if !isDecimal {
+				isDecimal = true
+			} else {
+				return false, false
+			}
+		} else if int(c) < int('0') || int(c) > int('9') {
+			return false, false
+		}
+	}
+	return true, isDecimal
 }
