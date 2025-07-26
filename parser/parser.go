@@ -128,14 +128,14 @@ func parseTuple(lex *lexer.TokenList) (*types.Tuple, error) {
 
 	for lex.Current().Type != lexer.StatementDelimiterType &&
 		lex.Current().Type != lexer.ModifierDelimiterType &&
-		lex.Current().Type != lexer.FigureDelimiterType {
+		lex.Current().Type != lexer.FigureDelimiterType { // do not call [TokenList.Next] because tuple does not require anything
 		lit, err := parseLiteral(lex.Current())
 		if err != nil {
 			return nil, err
 		}
 		tuple.AddValues(lit)
 
-		if !lex.Next() {
+		if !lex.Next() { // call [TokenList.Next] here because parseLiteral never call [TokenList.Next] for simple literal
 			return tuple, nil
 		}
 	}
