@@ -14,10 +14,6 @@ func Parse(lex *lexer.TokenList) (*Ast, error) {
 	tree := new(Ast)
 	tree.Type = AstTypeDefault
 
-	if lex.Empty() {
-		return tree, nil
-	}
-
 	for lex.Next() {
 		fig, err := parseFigure(lex)
 		if err != nil {
@@ -40,10 +36,6 @@ func parseFigure(lex *lexer.TokenList) (*Figure, error) {
 	// figure = [ statement, [{ statement-delimiter, [ statement ] }] ];
 
 	fig := new(Figure)
-
-	if lex.Empty() {
-		return fig, nil
-	}
 
 	for lex.Next() {
 		stmt, err := parseStatement(lex)
@@ -85,13 +77,7 @@ func parseStatement(lex *lexer.TokenList) (*Statement, error) {
 		stmt.Arguments = args
 	}
 
-	var mods []*Modifier
-
-	for !lex.Empty() {
-		if lex.Current().Type != lexer.ModifierDelimiterType {
-			return stmt, nil
-		}
-
+	for lex.Current().Type == lexer.ModifierDelimiterType {
 		if !lex.Next() {
 			return nil, errors.Join(lexer.ErrInvalidExpression, fmt.Errorf("expected modifier definition after modifier delimiter"))
 		}
@@ -100,12 +86,12 @@ func parseStatement(lex *lexer.TokenList) (*Statement, error) {
 		if err != nil {
 			return nil, err
 		}
-		mods = append(mods, mod)
+		stmt.Modifiers = append(stmt.Modifiers, mod)
 	}
 
-	stmt.Modifiers = mods
 	return stmt, nil
 }
+
 func parseProperty(lex *lexer.TokenList) (*Modifier, error) {
 	// property = ? identifier ?, [ arguments ]
 
