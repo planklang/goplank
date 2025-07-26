@@ -142,6 +142,13 @@ func parseArgument(lex *lexer.TokenList) (*types.Tuple, error) {
 		}
 	}
 
+	// handle optional parenthesis for argument
+	if len(tuple.GetValues()) == 1 {
+		if t, ok := tuple.GetValues()[0].(*types.Tuple); ok {
+			return t, nil
+		}
+	}
+
 	return tuple, nil
 }
 
