@@ -2,21 +2,12 @@ package parser
 
 import (
 	"encoding/json"
-	"errors"
 )
 
 type AstType uint
 
 const (
 	AstTypeDefault AstType = 0
-)
-
-var (
-	ErrUnknownValue    = errors.New("unknown value")
-	ErrInternal        = errors.New("internal error")
-	ErrInvalidModifier = errors.New("invalid modifier")
-	ErrInvalidArgument = errors.New("invalid argument")
-	ErrUnexpectedToken = errors.New("unexpected token")
 )
 
 type Ast struct {
