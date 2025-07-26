@@ -8,20 +8,17 @@ import (
 	"strconv"
 )
 
-func Parse(lex lexer.TokenList) (*Ast, error) {
+func Parse(lex *lexer.TokenList) (*Ast, error) {
 	// top-level = [ figure, [{ figure-delimiter, [figure] }] ];
 
 	tree := new(Ast)
 	tree.Type = AstTypeDefault
 
-	var fig *Figure
-	var err error
-
 	if lex.Empty() {
 		return tree, nil
 	}
 
-	fig, lex, err = parseFigure(lex)
+	fig, err := parseFigure(lex)
 	if err != nil {
 		return nil, err
 	}
@@ -32,19 +29,17 @@ func Parse(lex lexer.TokenList) (*Ast, error) {
 			return nil, errors.Join(ErrUnexpectedToken, fmt.Errorf("expected figure delimiter, got %v", lex.Current()))
 		}
 
-		_, ok := lex.Next()
-		if !ok {
+		if !lex.Next() {
 			return tree, nil
 		}
 
 		for lex.Current().Type == lexer.FigureDelimiterType {
-			_, ok := lex.Next()
-			if !ok {
+			if !lex.Next() {
 				return tree, nil
 			}
 		}
 
-		fig, lex, err = parseFigure(lex)
+		fig, err = parseFigure(lex)
 		if err != nil {
 			return nil, err
 		}
@@ -54,63 +49,112 @@ func Parse(lex lexer.TokenList) (*Ast, error) {
 	return tree, nil
 }
 
-func parseFigure(lex lexer.TokenList) (*Figure, lexer.TokenList, error) {
+func parseFigure(lex *lexer.TokenList) (*Figure, error) {
 	// figure = [ statement, [{ statement-delimiter, [ statement ] }] ];
 
 	fig := new(Figure)
 
 	if lex.Empty() {
-		return fig, lex, nil
+		return fig, nil
 	}
 
-	var stmt *Statement
-	var err error
-
-	stmt, lex, err = parseStatement(lex)
+	stmt, err := parseStatement(lex)
 	if err != nil {
-		return nil, lex, err
+		return nil, err
 	}
 	fig.Stmts = []*Statement{stmt}
 
 	for !lex.Empty() {
 		if lex.Current().Type != lexer.StatementDelimiterType {
-			return nil, lex, errors.Join(ErrUnexpectedToken, fmt.Errorf("expected statement delimiter, got %v", lex.Current()))
+			return nil, errors.Join(ErrUnexpectedToken, fmt.Errorf("expected statement delimiter, got %v", lex.Current()))
 		}
 
-		_, ok := lex.Next()
-		if !ok {
-			return fig, lex, nil
+		if !lex.Next() {
+			return fig, nil
 		}
 
 		for lex.Current().Type == lexer.StatementDelimiterType {
-			_, ok := lex.Next()
-			if !ok {
-				return fig, lex, nil
+			if !lex.Next() {
+				return fig, nil
 			}
 		}
 
-		stmt, lex, err = parseStatement(lex)
+		stmt, err = parseStatement(lex)
 		if err != nil {
-			return fig, lex, err
+			return fig, err
 		}
 		fig.Stmts = append(fig.Stmts, stmt)
 	}
 
-	return fig, lex, nil
+	return fig, nil
 }
 
-func parseStatement(lex lexer.TokenList) (*Statement, lexer.TokenList, error) {
+func parseStatement(lex *lexer.TokenList) (*Statement, error) {
 	// statement = keyword, [ arguments ], [{ property-delimiter, property }];
 
-	if lex.Current().Type != lexer.KeywordType {
-		return nil, lex, errors.Join(ErrUnexpectedToken, fmt.Errorf("expected keyword, got %v", lex.Current()))
+	if lex.Current().Type != lexer.StatementDelimiterType {
+		return nil, errors.Join(ErrUnexpectedToken, fmt.Errorf("expected keyword, got %v", lex.Current()))
 	}
 
-	return new(Statement), lex, nil
+	stmt := new(Statement)
+	stmt.Keyword = lex.Current().Literal
+
+	if !lex.Next() {
+		return stmt, nil
+	}
+
+	args, err := parseTuple(lex)
+	if err != nil {
+		return nil, err
+	}
+	stmt.Arguments = args
+
+	var mods []*Modifier
+
+	for !lex.Empty() {
+		if lex.Current().Type != lexer.ModifierDelimiterType {
+			return stmt, nil
+		}
+
+		if !lex.Next() {
+			return nil, errors.Join(lexer.ErrInvalidExpression, fmt.Errorf("expected modifier definition after modifier delimiter"))
+		}
+
+		mod, err := parseProperty(lex)
+		if err != nil {
+			return nil, err
+		}
+		mods = append(mods, mod)
+	}
+
+	stmt.Modifiers = mods
+	return stmt, nil
 }
 
-func parseTuple(lex lexer.TokenList) (*types.Tuple, lexer.TokenList, error) {
-	return new(types.Tuple), lex, nil
+func parseProperty(lex *lexer.TokenList) (*Modifier, error) {
+	// property = ? identifier ?, [ arguments ]
+
+	if lex.Current().Type != lexer.ModifierType {
+		return nil, errors.Join(ErrUnexpectedToken, fmt.Errorf("expected modifier name, got %v", lex.Current()))
+	}
+
+	mod := new(Modifier)
+	mod.Name = lex.Current().Literal
+
+	if !lex.Next() {
+		return mod, nil
+	}
+
+	args, err := parseTuple(lex)
+	if err != nil {
+		return nil, err
+	}
+	mod.Arguments = args
+	return mod, nil
+}
+
+func parseTuple(lex *lexer.TokenList) (*types.Tuple, error) {
+	return new(types.Tuple), nil
 }
 
 func parseLiteral(lex *lexer.Lexer, tuple *types.Tuple) error {
