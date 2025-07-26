@@ -21,34 +21,19 @@ func Parse(lex lexer.TokenList) (*Ast, error) {
 		return tree, nil
 	}
 
-	fig, lex, err = parseFigure(lex)
-	if err != nil {
-		return nil, err
-	}
-	tree.Body = []*Figure{fig}
-
-	for !lex.Empty() {
-		if lex.Current().Type != lexer.FigureDelimiterType {
-			return nil, errors.Join(ErrUnexpectedToken, fmt.Errorf("expected figure delimiter, got %v", lex.Current()))
-		}
-
-		_, ok := lex.Next()
-		if !ok {
-			return tree, nil
-		}
-
-		for lex.Current().Type == lexer.FigureDelimiterType {
-			_, ok := lex.Next()
-			if !ok {
-				return tree, nil
-			}
-		}
-
+	for lex.Next() {
 		fig, lex, err = parseFigure(lex)
 		if err != nil {
 			return nil, err
 		}
 		tree.Body = append(tree.Body, fig)
+
+		if !lex.Next() {
+			return tree, nil
+		}
+		if lex.Current().Type != lexer.FigureDelimiterType {
+			return nil, errors.Join(ErrUnexpectedToken, fmt.Errorf("expected figure delimiter, got %v", lex.Current()))
+		}
 	}
 
 	return tree, nil
@@ -66,34 +51,19 @@ func parseFigure(lex lexer.TokenList) (*Figure, lexer.TokenList, error) {
 	var stmt *Statement
 	var err error
 
-	stmt, lex, err = parseStatement(lex)
-	if err != nil {
-		return nil, lex, err
-	}
-	fig.Stmts = []*Statement{stmt}
-
-	for !lex.Empty() {
-		if lex.Current().Type != lexer.StatementDelimiterType {
-			return nil, lex, errors.Join(ErrUnexpectedToken, fmt.Errorf("expected statement delimiter, got %v", lex.Current()))
-		}
-
-		_, ok := lex.Next()
-		if !ok {
-			return fig, lex, nil
-		}
-
-		for lex.Current().Type == lexer.StatementDelimiterType {
-			_, ok := lex.Next()
-			if !ok {
-				return fig, lex, nil
-			}
-		}
-
+	for lex.Next() {
 		stmt, lex, err = parseStatement(lex)
 		if err != nil {
 			return fig, lex, err
 		}
 		fig.Stmts = append(fig.Stmts, stmt)
+
+		if !lex.Next() {
+			return fig, lex, nil
+		}
+		if lex.Current().Type != lexer.StatementDelimiterType {
+			return nil, lex, errors.Join(ErrUnexpectedToken, fmt.Errorf("expected statement delimiter, got %v", lex.Current()))
+		}
 	}
 
 	return fig, lex, nil

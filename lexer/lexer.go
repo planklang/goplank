@@ -118,7 +118,7 @@ func Lex(content string) (*TokenList, error) {
 	for lexs[len(lexs)-1].Type == StatementDelimiterType {
 		lexs = lexs[:len(lexs)-1] // remove useless statement delimiter
 	}
-	return &TokenList{list: lexs, index: 0}, nil
+	return &TokenList{list: lexs, index: -1}, nil
 }
 
 func parseLiteral(i *int, words []string, parenthesisCounter *int, squareBracketsCounter *int) ([]*Lexer, error) {
