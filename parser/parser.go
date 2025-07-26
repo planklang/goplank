@@ -130,14 +130,14 @@ func parseArgument(lex *lexer.TokenList) (*types.Tuple, error) {
 
 	for lex.Current().Type != lexer.StatementDelimiterType &&
 		lex.Current().Type != lexer.ModifierDelimiterType &&
-		lex.Current().Type != lexer.FigureDelimiterType { // do not call [TokenList.Next] because tuple does not require anything
+		lex.Current().Type != lexer.FigureDelimiterType { // do not call [TokenList.Next] because argument does not require anything
 		val, err := parseWeakDelimiters(lex)
 		if err != nil {
 			return nil, err
 		}
 		tuple.AddValues(val)
 
-		if !lex.Next() { // call [TokenList.Next] here because parseWeakDelimiters never call [TokenList.Next] for simple literal
+		if !lex.Next() { // call [TokenList.Next] here because parseWeakDelimiters never skips the last one
 			return tuple, nil
 		}
 	}
