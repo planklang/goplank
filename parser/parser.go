@@ -18,32 +18,19 @@ func Parse(lex *lexer.TokenList) (*Ast, error) {
 		return tree, nil
 	}
 
-	fig, err := parseFigure(lex)
-	if err != nil {
-		return nil, err
-	}
-	tree.Body = []*Figure{fig}
-
-	for !lex.Empty() {
-		if lex.Current().Type != lexer.FigureDelimiterType {
-			return nil, errors.Join(ErrUnexpectedToken, fmt.Errorf("expected figure delimiter, got %v", lex.Current()))
-		}
-
-		if !lex.Next() {
-			return tree, nil
-		}
-
-		for lex.Current().Type == lexer.FigureDelimiterType {
-			if !lex.Next() {
-				return tree, nil
-			}
-		}
-
-		fig, err = parseFigure(lex)
+	for lex.Next() {
+		fig, err := parseFigure(lex)
 		if err != nil {
 			return nil, err
 		}
 		tree.Body = append(tree.Body, fig)
+
+		if !lex.Next() {
+			return tree, nil
+		}
+		if lex.Current().Type != lexer.FigureDelimiterType {
+			return nil, errors.Join(ErrUnexpectedToken, fmt.Errorf("expected figure delimiter, got %s", lex.Current()))
+		}
 	}
 
 	return tree, nil
@@ -58,32 +45,19 @@ func parseFigure(lex *lexer.TokenList) (*Figure, error) {
 		return fig, nil
 	}
 
-	stmt, err := parseStatement(lex)
-	if err != nil {
-		return nil, err
-	}
-	fig.Stmts = []*Statement{stmt}
-
-	for !lex.Empty() {
-		if lex.Current().Type != lexer.StatementDelimiterType {
-			return nil, errors.Join(ErrUnexpectedToken, fmt.Errorf("expected statement delimiter, got %v", lex.Current()))
-		}
-
-		if !lex.Next() {
-			return fig, nil
-		}
-
-		for lex.Current().Type == lexer.StatementDelimiterType {
-			if !lex.Next() {
-				return fig, nil
-			}
-		}
-
-		stmt, err = parseStatement(lex)
+	for lex.Next() {
+		stmt, err := parseStatement(lex)
 		if err != nil {
 			return fig, err
 		}
 		fig.Stmts = append(fig.Stmts, stmt)
+
+		if !lex.Next() {
+			return fig, nil
+		}
+		if lex.Current().Type != lexer.StatementDelimiterType {
+			return nil, errors.Join(ErrUnexpectedToken, fmt.Errorf("expected statement delimiter, got %s", lex.Current()))
+		}
 	}
 
 	return fig, nil
@@ -92,8 +66,8 @@ func parseFigure(lex *lexer.TokenList) (*Figure, error) {
 func parseStatement(lex *lexer.TokenList) (*Statement, error) {
 	// statement = keyword, [ arguments ], [{ property-delimiter, property }];
 
-	if lex.Current().Type != lexer.StatementDelimiterType {
-		return nil, errors.Join(ErrUnexpectedToken, fmt.Errorf("expected keyword, got %v", lex.Current()))
+	if lex.Current().Type != lexer.KeywordType {
+		return nil, errors.Join(ErrUnexpectedToken, fmt.Errorf("expected keyword, got %s", lex.Current()))
 	}
 
 	stmt := new(Statement)
@@ -103,11 +77,13 @@ func parseStatement(lex *lexer.TokenList) (*Statement, error) {
 		return stmt, nil
 	}
 
-	args, err := parseTuple(lex)
-	if err != nil {
-		return nil, err
+	if lex.Current().Type != lexer.ModifierDelimiterType {
+		args, err := parseTuple(lex)
+		if err != nil {
+			return nil, err
+		}
+		stmt.Arguments = args
 	}
-	stmt.Arguments = args
 
 	var mods []*Modifier
 
@@ -130,11 +106,10 @@ func parseStatement(lex *lexer.TokenList) (*Statement, error) {
 	stmt.Modifiers = mods
 	return stmt, nil
 }
-
 func parseProperty(lex *lexer.TokenList) (*Modifier, error) {
 	// property = ? identifier ?, [ arguments ]
 
-	if lex.Current().Type != lexer.ModifierType {
+	if lex.Current().Type != lexer.IdentifierType {
 		return nil, errors.Join(ErrUnexpectedToken, fmt.Errorf("expected modifier name, got %v", lex.Current()))
 	}
 
@@ -159,7 +134,7 @@ func parseTuple(lex *lexer.TokenList) (*types.Tuple, error) {
 
 func parseLiteral(lex *lexer.Lexer, tuple *types.Tuple) error {
 	switch lex.Type {
-	case lexer.LiteralType:
+	case lexer.IdentifierType:
 		tuple.AddValues(types.NewDefaultLiteral(lex.Literal))
 	case lexer.VariableType:
 		//TODO: handle
