@@ -124,33 +124,47 @@ func parseProperty(lex *lexer.TokenList) (*Modifier, error) {
 }
 
 func parseTuple(lex *lexer.TokenList) (*types.Tuple, error) {
-	return new(types.Tuple), nil
+	tuple := new(types.Tuple)
+
+	for lex.Current().Type != lexer.StatementDelimiterType &&
+		lex.Current().Type != lexer.ModifierDelimiterType &&
+		lex.Current().Type != lexer.FigureDelimiterType {
+		lit, err := parseLiteral(lex.Current())
+		if err != nil {
+			return nil, err
+		}
+		tuple.AddValues(lit)
+
+		if !lex.Next() {
+			return tuple, nil
+		}
+	}
+
+	return tuple, nil
 }
 
-func parseLiteral(lex *lexer.Lexer, tuple *types.Tuple) error {
+func parseLiteral(lex *lexer.Lexer) (types.Value, error) {
 	switch lex.Type {
 	case lexer.IdentifierType:
-		tuple.AddValues(types.NewDefaultLiteral(lex.Literal))
+		return types.NewDefaultLiteral(lex.Literal), nil
 	case lexer.VariableType:
 		//TODO: handle
 	case lexer.StringType:
-		tuple.AddValues(types.String(lex.Literal))
+		return types.String(lex.Literal), nil
 	case lexer.IntType:
 		i, err := strconv.ParseInt(lex.Literal, 10, 64)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		tuple.AddValues(types.Int(i))
+		return types.Int(i), nil
 	case lexer.FloatType:
 		f, err := strconv.ParseFloat(lex.Literal, 64)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		tuple.AddValues(types.Float(f))
+		return types.Float(f), nil
 	case lexer.WeakDelimiterType:
 		//TODO: handle
-	default:
-		return errors.Join(ErrUnknownValue, fmt.Errorf("unsupported lex types %s", lex.Type))
 	}
-	return nil
+	return nil, errors.Join(ErrUnknownValue, fmt.Errorf("unsupported lex types %s", lex.Type))
 }
