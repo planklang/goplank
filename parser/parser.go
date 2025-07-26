@@ -8,6 +8,10 @@ import (
 	"strconv"
 )
 
+var (
+	ErrStatementExcepted = fmt.Errorf("statement excepted")
+)
+
 func Parse(lex lexer.TokenList) (*Ast, error) {
 	// top-level = [ figure, [{ figure-delimiter, [figure] }] ];
 
@@ -32,7 +36,7 @@ func Parse(lex lexer.TokenList) (*Ast, error) {
 			return tree, nil
 		}
 		if lex.Current().Type != lexer.FigureDelimiterType {
-			return nil, errors.Join(ErrUnexpectedToken, fmt.Errorf("expected figure delimiter, got %v", lex.Current()))
+			return nil, errors.Join(ErrUnexpectedToken, fmt.Errorf("expected figure delimiter, got %s", lex.Current()))
 		}
 	}
 
@@ -62,7 +66,7 @@ func parseFigure(lex lexer.TokenList) (*Figure, lexer.TokenList, error) {
 			return fig, lex, nil
 		}
 		if lex.Current().Type != lexer.StatementDelimiterType {
-			return nil, lex, errors.Join(ErrUnexpectedToken, fmt.Errorf("expected statement delimiter, got %v", lex.Current()))
+			return nil, lex, errors.Join(ErrUnexpectedToken, fmt.Errorf("expected statement delimiter, got %s", lex.Current()))
 		}
 	}
 
@@ -73,7 +77,7 @@ func parseStatement(lex lexer.TokenList) (*Statement, lexer.TokenList, error) {
 	// statement = keyword, [ arguments ], [{ property-delimiter, property }];
 
 	if lex.Current().Type != lexer.KeywordType {
-		return nil, lex, errors.Join(ErrUnexpectedToken, fmt.Errorf("expected keyword, got %v", lex.Current()))
+		return nil, lex, errors.Join(ErrUnexpectedToken, fmt.Errorf("expected keyword, got %s", lex.Current()))
 	}
 
 	return new(Statement), lex, nil
@@ -85,7 +89,7 @@ func parseTuple(lex lexer.TokenList) (*types.Tuple, lexer.TokenList, error) {
 
 func parseLiteral(lex *lexer.Lexer, tuple *types.Tuple) error {
 	switch lex.Type {
-	case lexer.LiteralType:
+	case lexer.IdentifierType:
 		tuple.AddValues(types.NewDefaultLiteral(lex.Literal))
 	case lexer.VariableType:
 		//TODO: handle

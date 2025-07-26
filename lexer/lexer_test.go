@@ -30,8 +30,8 @@ func TestLex(t *testing.T) {
 	if resList[0].Type != KeywordType || resList[0].Literal != "axis" {
 		t.Error("Expected keyword(axis), got", resList[0])
 	}
-	if resList[1].Type != LiteralType || resList[1].Literal != "x" {
-		t.Error("Expected literal(x), got", resList[1])
+	if resList[1].Type != IdentifierType || resList[1].Literal != "x" {
+		t.Error("Expected identifier(x), got", resList[1])
 	}
 	res, err = Lex("axis # hello world")
 	if err != nil {
@@ -79,8 +79,8 @@ func TestLex(t *testing.T) {
 	if resList[1].Type != ModifierDelimiterType || resList[1].Literal != "|" {
 		t.Error("Expected property_delimiter(|), got", resList[1])
 	}
-	if resList[2].Type != ModifierType || resList[2].Literal != "color" {
-		t.Error("Expected modifier(color), got", resList[2])
+	if resList[2].Type != IdentifierType || resList[2].Literal != "color" {
+		t.Error("Expected identifier(color), got", resList[2])
 	}
 	res, err = Lex("axis\n--- axis")
 	if err != nil {
@@ -166,7 +166,7 @@ func TestLexLiteral(t *testing.T) {
 		t.Error("Expected 2, got", len(resList))
 		t.Log(resList)
 	}
-	if resList[1].Type != LiteralType || resList[1].Literal != "x" {
+	if resList[1].Type != IdentifierType || resList[1].Literal != "x" {
 		t.Error("Expected literal(x), got", resList[1])
 	}
 
@@ -216,23 +216,7 @@ func TestLexLiteral(t *testing.T) {
 }
 
 func TestLexError(t *testing.T) {
-	res, err := Lex("12")
-	if err == nil {
-		t.Error("Expected error, got", res)
-	}
-	if !errors.Is(err, ErrStatementExcepted) {
-		t.Error("Expected ErrStatementExcepted, got", err)
-	}
-
-	res, err = Lex("axis\n;; 1 hello")
-	if err == nil {
-		t.Error("Expected error, got", res)
-	}
-	if !errors.Is(err, ErrStatementExcepted) {
-		t.Error("Expected ErrStatementExcepted, got", err)
-	}
-
-	res, err = Lex("axis | color 'bonsoir je marche pas ")
+	res, err := Lex("axis | color 'bonsoir je marche pas ")
 	if err == nil {
 		t.Error("Expected error, got", res)
 	}

@@ -12,12 +12,11 @@ type LexType string
 
 const (
 	KeywordType            LexType = "keyword"
-	LiteralType            LexType = "literal"
+	IdentifierType         LexType = "identifier"
 	WeakDelimiterType      LexType = "weak_delimiter"
 	ModifierDelimiterType  LexType = "modifier_delimiter"
 	FigureDelimiterType    LexType = "figure_delimiter"
 	StatementDelimiterType LexType = "statement_delimiter"
-	ModifierType           LexType = "modifier"
 	VariableType           LexType = "variable"
 	StringType             LexType = "string"
 	IntType                LexType = "int"
@@ -33,7 +32,6 @@ var (
 	statementDelimiters = []string{";;"}
 	weakDelimiters      = []string{"(", ")", "[", "]"}
 
-	ErrStatementExcepted = fmt.Errorf("statement excepted")
 	ErrInvalidExpression = fmt.Errorf("invalid expression")
 )
 
@@ -50,9 +48,6 @@ func Lex(content string) (*TokenList, error) {
 	var lexs []*Lexer
 	lines := strings.Split(content, "\n")
 	delimiterAdded := true
-	inStatement := false
-	inProperty := false
-	modifierAdded := false
 	for ln, line := range lines {
 		i := 0
 		words := strings.Fields(line)
@@ -62,35 +57,17 @@ func Lex(content string) (*TokenList, error) {
 			word := words[i]
 			isDelim, typ := isDelimiter(word)
 			if !delimiterAdded && i == 0 && !isDelim { // implicit delimiter
-				inStatement = false
-				inProperty = false
-				modifierAdded = false
-				delimiterAdded = false
 				lexs = append(lexs, &Lexer{StatementDelimiterType, ImplicitDelimiter})
 			}
 			if isDelim {
-				inStatement = false
-				inProperty = false
-				modifierAdded = false
 				delimiterAdded = true
 				if typ == FigureDelimiterType {
 					lexs = append(lexs, &Lexer{typ, FigureDelimiter})
 				} else {
 					lexs = append(lexs, &Lexer{typ, word})
-					if typ == ModifierDelimiterType {
-						inProperty = true
-						inStatement = true
-					}
 				}
 			} else if slices.Contains(keywords, word) {
 				lexs = append(lexs, &Lexer{KeywordType, word})
-				inStatement = true
-			} else if !inStatement {
-				fmt.Println(genErrorMessage(ErrStatementExcepted, i, words, ln))
-				return nil, ErrStatementExcepted
-			} else if !modifierAdded && inProperty {
-				lexs = append(lexs, &Lexer{ModifierType, word})
-				modifierAdded = true
 			} else {
 				ls, err := parseLiteral(&i, words, &parenthesisCounter, &squareBracketsCounter)
 				if err != nil {
@@ -112,8 +89,6 @@ func Lex(content string) (*TokenList, error) {
 			return nil, err
 		}
 		delimiterAdded = false
-		inProperty = false
-		modifierAdded = false
 	}
 	for lexs[len(lexs)-1].Type == StatementDelimiterType {
 		lexs = lexs[:len(lexs)-1] // remove useless statement delimiter
@@ -224,7 +199,7 @@ func parseLiteral(i *int, words []string, parenthesisCounter *int, squareBracket
 				fnUpdate(IntType)
 			}
 		} else {
-			fnUpdate(LiteralType)
+			fnUpdate(IdentifierType)
 		}
 		content += string(c)
 	}
