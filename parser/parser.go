@@ -13,6 +13,8 @@ var (
 	ErrInternal          = errors.New("internal error")
 	ErrInvalidModifier   = errors.New("invalid modifier")
 	ErrInvalidArgument   = errors.New("invalid argument")
+	ErrInvalidLiteral    = errors.New("invalid literal")
+	ErrMissingLiteral    = errors.New("missing literal")
 	ErrUnexpectedToken   = errors.New("unexpected token")
 	ErrDelimiterExcepted = errors.Join(ErrUnexpectedToken, errors.New("delimiter excepted"))
 )
@@ -79,7 +81,7 @@ func parseStatement(lex *lexer.TokenList) (*Statement, error) {
 	}
 
 	if lex.Current().Type != lexer.ModifierDelimiterType {
-		args, err := parseTuple(lex)
+		args, err := parseArgument(lex)
 		if err != nil {
 			return nil, err
 		}
@@ -115,7 +117,7 @@ func parseProperty(lex *lexer.TokenList) (*Modifier, error) {
 		return mod, nil
 	}
 
-	args, err := parseTuple(lex)
+	args, err := parseArgument(lex)
 	if err != nil {
 		return nil, err
 	}
@@ -123,24 +125,59 @@ func parseProperty(lex *lexer.TokenList) (*Modifier, error) {
 	return mod, nil
 }
 
-func parseTuple(lex *lexer.TokenList) (*types.Tuple, error) {
+func parseArgument(lex *lexer.TokenList) (*types.Tuple, error) {
 	tuple := new(types.Tuple)
 
 	for lex.Current().Type != lexer.StatementDelimiterType &&
 		lex.Current().Type != lexer.ModifierDelimiterType &&
 		lex.Current().Type != lexer.FigureDelimiterType { // do not call [TokenList.Next] because tuple does not require anything
-		lit, err := parseLiteral(lex.Current())
+		val, err := parseWeakDelimiters(lex)
 		if err != nil {
 			return nil, err
 		}
-		tuple.AddValues(lit)
+		tuple.AddValues(val)
 
-		if !lex.Next() { // call [TokenList.Next] here because parseLiteral never call [TokenList.Next] for simple literal
+		if !lex.Next() { // call [TokenList.Next] here because parseWeakDelimiters never call [TokenList.Next] for simple literal
 			return tuple, nil
 		}
 	}
 
 	return tuple, nil
+}
+
+func parseWeakDelimiters(lex *lexer.TokenList) (types.Value, error) {
+	if lex.Current().Type != lexer.WeakDelimiterType {
+		return parseLiteral(lex.Current())
+	}
+	fn := func(c types.ValueContainer, end string) error {
+		for lex.Next() && lex.Current().Type != lexer.WeakDelimiterType && lex.Current().Literal != end {
+			if lex.Current().Type == lexer.ModifierDelimiterType ||
+				lex.Current().Type == lexer.FigureDelimiterType ||
+				lex.Current().Type == lexer.StatementDelimiterType {
+				return errors.Join(ErrMissingLiteral, fmt.Errorf("unfinished container %v", c))
+			}
+			val, err := parseWeakDelimiters(lex)
+			if err != nil {
+				return err
+			}
+			if !c.CanContain(val) {
+				return errors.Join(ErrInvalidLiteral, fmt.Errorf("container cannot contain %v", val))
+			}
+			c.AddValues(val)
+		}
+		return nil
+	}
+	switch lex.Current().Literal {
+	case "(":
+		tuple := new(types.Tuple)
+		return tuple, fn(tuple, ")") // valid because tuple is a pointer
+	case "[":
+		list := new(types.List)
+		return list, fn(list, "]") // valid because list is a pointer
+	case "]", ")":
+		return nil, errors.Join(ErrInvalidLiteral, fmt.Errorf("cannot close a container with %s", lex.Current().Literal))
+	}
+	return nil, errors.Join(ErrUnknownValue, fmt.Errorf("unsupported weak delimiters %s", lex.Current().Type))
 }
 
 func parseLiteral(lex *lexer.Lexer) (types.Value, error) {
@@ -163,8 +200,6 @@ func parseLiteral(lex *lexer.Lexer) (types.Value, error) {
 			return nil, err
 		}
 		return types.Float(f), nil
-	case lexer.WeakDelimiterType:
-		//TODO: handle
 	}
-	return nil, errors.Join(ErrUnknownValue, fmt.Errorf("unsupported lex types %s", lex.Type))
+	return nil, errors.Join(ErrUnknownValue, fmt.Errorf("unsupported literal lex types %s", lex.Type))
 }
