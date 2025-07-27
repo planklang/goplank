@@ -157,7 +157,7 @@ func parseWeakDelimiters(lex *lexer.TokenList) (types.Value, error) {
 		return parseLiteral(lex.Current())
 	}
 	fn := func(c types.ValueContainer, end string) error {
-		for lex.Next() && lex.Current().Type != lexer.WeakDelimiterType && lex.Current().Literal != end {
+		for lex.Next() && (lex.Current().Type != lexer.WeakDelimiterType || lex.Current().Literal != end) {
 			if lex.Current().Type == lexer.ModifierDelimiterType ||
 				lex.Current().Type == lexer.FigureDelimiterType ||
 				lex.Current().Type == lexer.StatementDelimiterType {
