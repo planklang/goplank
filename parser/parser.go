@@ -25,7 +25,7 @@ func Parse(lex *lexer.TokenList) (*Ast, error) {
 	tree := new(Ast)
 	tree.Type = AstTypeDefault
 
-	fig, err := parseFigure(lex)
+	fig, err := parseFigure(lex) // before the first [TokenList.Next] because top level does not require something to start
 	if err != nil {
 		return nil, err
 	}
