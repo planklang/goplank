@@ -2,6 +2,7 @@ package parser
 
 import (
 	"github.com/planklang/goplank/lexer"
+	"github.com/planklang/goplank/parser/types"
 	"testing"
 )
 
@@ -19,15 +20,28 @@ func TestParse(t *testing.T) {
 	if len(tree.Body) != 1 {
 		t.Errorf("Excepted 1, got %d", len(tree.Body))
 	}
-	axis, ok := tree.Body[0].(*Axis)
+	fig := tree.Body[0]
+	if len(fig.Stmts) != 1 {
+		t.Errorf("Excepted 1, got %d", len(fig.Stmts))
+	}
+	axis := fig.Stmts[0]
+	if axis.Keyword != "axis" {
+		t.Error("Expected axis, got", axis.Keyword)
+	}
+	vs := axis.Arguments.GetValues()
+	if len(vs) != 1 {
+		t.Errorf("Excepted 1, got %d", len(vs))
+	}
+	arg := vs[0]
+	if arg.Type() != types.DefaultLiteralType {
+		t.Errorf("Excepted %s, got %s", types.DefaultLiteralType, arg.Type())
+	}
+	p, ok := arg.Value().(*types.Literal)
 	if !ok {
-		t.Error("Expected Axis, got", tree.Body[0])
+		t.Errorf("Cannot convert %s to literal", arg.Value())
 	}
-	if axis.Target != "x" {
-		t.Error("Expected x, got", axis.Target)
-	}
-	if axis.Label != "" {
-		t.Error("Expected empty label, got", axis.Label)
+	if p.Value() != "x" {
+		t.Error("Expected x, got", p.Value())
 	}
 	//TODO: check range
 	if len(axis.Modifiers) != 0 {
@@ -47,15 +61,39 @@ func TestParse(t *testing.T) {
 	if len(tree.Body) != 1 {
 		t.Errorf("Excepted 1, got %d", len(tree.Body))
 	}
-	axis, ok = tree.Body[0].(*Axis)
+	if len(tree.Body) != 1 {
+		t.Errorf("Excepted 1, got %d", len(tree.Body))
+	}
+	fig = tree.Body[0]
+	axis = fig.Stmts[0]
+	if axis.Keyword != "axis" {
+		t.Error("Expected axis, got", axis.Keyword)
+	}
+	vs = axis.Arguments.GetValues()
+	if len(vs) != 2 {
+		t.Errorf("Excepted 2, got %d", len(vs))
+	}
+	arg1 := vs[0]
+	if arg1.Type() != types.DefaultLiteralType {
+		t.Errorf("Excepted %s, got %s", types.DefaultLiteralType, arg1.Type())
+	}
+	p, ok = arg1.Value().(*types.Literal)
 	if !ok {
-		t.Error("Expected Axis, got", tree.Body[0])
+		t.Errorf("Cannot convert %s to literal", arg1.Value())
 	}
-	if axis.Target != "x" {
-		t.Error("Expected x, got", axis.Target)
+	if p.Value() != "x" {
+		t.Error("Expected x, got", p.Value())
 	}
-	if axis.Label != "Label" {
-		t.Error("Expected Label, got", axis.Label)
+	arg2 := vs[1]
+	if arg2.Type() != types.StringType {
+		t.Errorf("Excepted %s, got %s", types.StringType, arg1.Type())
+	}
+	p2, ok := arg1.Value().(*types.String)
+	if !ok {
+		t.Errorf("Cannot convert %s to literal", arg2.Value())
+	}
+	if p2.Value() != "Label" {
+		t.Error("Expected Label, got", p2.Value())
 	}
 	//TODO: check range
 	if len(axis.Modifiers) != 0 {
