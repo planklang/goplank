@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"fmt"
 	"github.com/planklang/goplank/lexer"
 	"github.com/planklang/goplank/parser/types"
 	"testing"
@@ -37,17 +36,20 @@ func TestParse(t *testing.T) {
 	if arg.Type() != types.DefaultLiteralType {
 		t.Errorf("Excepted %s, got %s", types.DefaultLiteralType, arg.Type())
 	}
-	fmt.Printf("%s %s\n", arg.Type(), arg.Value())
-	p, ok := arg.Value().(types.Literal)
+	p, ok := arg.Value().(string)
 	if !ok {
 		t.Errorf("Cannot convert %s to literal", arg.Value())
 	}
-	if p.Value() != "x" {
-		t.Error("Expected x, got", p.Value())
+	if p != "x" {
+		t.Error("Expected x, got", p)
 	}
 	//TODO: check range
 	if len(axis.Modifiers) != 0 {
 		t.Error("Expected zero modifiers, got", len(axis.Modifiers))
+	}
+	if t.Failed() {
+		println(tree)
+		t.FailNow()
 	}
 
 	lex, err = lexer.Lex("axis x 'Label'")
@@ -79,26 +81,30 @@ func TestParse(t *testing.T) {
 	if arg1.Type() != types.DefaultLiteralType {
 		t.Errorf("Excepted %s, got %s", types.DefaultLiteralType, arg1.Type())
 	}
-	p, ok = arg1.Value().(types.Literal)
+	p, ok = arg1.Value().(string)
 	if !ok {
-		t.Errorf("Cannot convert %s to literal", arg1.Value())
+		t.Errorf("Cannot convert %s to literal", arg1.Type())
 	}
-	if p.Value() != "x" {
-		t.Error("Expected x, got", p.Value())
+	if p != "x" {
+		t.Error("Expected x, got", p)
 	}
 	arg2 := vs[1]
 	if arg2.Type() != types.StringType {
 		t.Errorf("Excepted %s, got %s", types.StringType, arg1.Type())
 	}
-	p2, ok := arg1.Value().(types.String)
+	p2, ok := arg2.Value().(string)
 	if !ok {
-		t.Errorf("Cannot convert %s to literal", arg2.Value())
+		t.Errorf("Cannot convert %s to string", arg2.Type())
 	}
-	if p2.Value() != "Label" {
-		t.Error("Expected Label, got", p2.Value())
+	if p2 != "Label" {
+		t.Error("Expected Label, got", p2)
 	}
 	//TODO: check range
 	if len(axis.Modifiers) != 0 {
 		t.Error("Expected zero modifiers, got", len(axis.Modifiers))
+	}
+	if t.Failed() {
+		println(tree.String())
+		t.FailNow()
 	}
 }
