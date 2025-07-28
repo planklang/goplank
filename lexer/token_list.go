@@ -14,7 +14,7 @@ func (list *TokenList) Current() *Lexer {
 
 func (list *TokenList) Next() bool {
 	list.index++
-	return list.index < len(list.list)
+	return !list.Empty()
 }
 
 func (list *TokenList) Empty() bool {

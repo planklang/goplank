@@ -25,8 +25,14 @@ func Parse(lex *lexer.TokenList) (*Ast, error) {
 	tree := new(Ast)
 	tree.Type = AstTypeDefault
 
+	fig, err := parseFigure(lex)
+	if err != nil {
+		return nil, err
+	}
+	tree.Body = append(tree.Body, fig)
+
 	for lex.Next() {
-		fig, err := parseFigure(lex)
+		fig, err = parseFigure(lex)
 		if err != nil {
 			return nil, err
 		}
@@ -88,6 +94,10 @@ func parseStatement(lex *lexer.TokenList) (*Statement, error) {
 		stmt.Arguments = args
 	}
 
+	if lex.Empty() {
+		return stmt, nil
+	}
+
 	for lex.Current().Type == lexer.ModifierDelimiterType {
 		if !lex.Next() {
 			return nil, errors.Join(lexer.ErrInvalidExpression, fmt.Errorf("expected modifier definition after modifier delimiter"))
@@ -126,6 +136,7 @@ func parseProperty(lex *lexer.TokenList) (*Modifier, error) {
 }
 
 func parseArgument(lex *lexer.TokenList) (*types.Tuple, error) {
+
 	tuple := new(types.Tuple)
 
 	for lex.Current().Type != lexer.StatementDelimiterType &&

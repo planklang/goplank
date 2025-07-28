@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"github.com/planklang/goplank/lexer"
 	"github.com/planklang/goplank/parser/types"
 	"testing"
@@ -36,7 +37,8 @@ func TestParse(t *testing.T) {
 	if arg.Type() != types.DefaultLiteralType {
 		t.Errorf("Excepted %s, got %s", types.DefaultLiteralType, arg.Type())
 	}
-	p, ok := arg.Value().(*types.Literal)
+	fmt.Printf("%s %s\n", arg.Type(), arg.Value())
+	p, ok := arg.Value().(types.Literal)
 	if !ok {
 		t.Errorf("Cannot convert %s to literal", arg.Value())
 	}
@@ -77,7 +79,7 @@ func TestParse(t *testing.T) {
 	if arg1.Type() != types.DefaultLiteralType {
 		t.Errorf("Excepted %s, got %s", types.DefaultLiteralType, arg1.Type())
 	}
-	p, ok = arg1.Value().(*types.Literal)
+	p, ok = arg1.Value().(types.Literal)
 	if !ok {
 		t.Errorf("Cannot convert %s to literal", arg1.Value())
 	}
@@ -88,7 +90,7 @@ func TestParse(t *testing.T) {
 	if arg2.Type() != types.StringType {
 		t.Errorf("Excepted %s, got %s", types.StringType, arg1.Type())
 	}
-	p2, ok := arg1.Value().(*types.String)
+	p2, ok := arg1.Value().(types.String)
 	if !ok {
 		t.Errorf("Cannot convert %s to literal", arg2.Value())
 	}
