@@ -4,15 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"github.com/planklang/goplank/lexer"
+	"github.com/planklang/goplank/parser/statements"
 	"github.com/planklang/goplank/parser/types"
 	"strconv"
 )
 
 var (
 	ErrUnknownValue      = errors.New("unknown value")
-	ErrInternal          = errors.New("internal error")
-	ErrInvalidModifier   = errors.New("invalid modifier")
-	ErrInvalidArgument   = errors.New("invalid argument")
 	ErrInvalidLiteral    = errors.New("invalid literal")
 	ErrMissingLiteral    = errors.New("missing literal")
 	ErrUnexpectedToken   = errors.New("unexpected token")
@@ -72,15 +70,14 @@ func parseFigure(lex *lexer.TokenList) (*Figure, error) {
 	return fig, nil
 }
 
-func parseStatement(lex *lexer.TokenList) (*Statement, error) {
+func parseStatement(lex *lexer.TokenList) (statements.Statement, error) {
 	// statement = keyword, [ arguments ], [{ property-delimiter, property }];
 
 	if lex.Current().Type != lexer.KeywordType {
 		return nil, errors.Join(ErrUnexpectedToken, fmt.Errorf("expected keyword, not %s", lex.Current()))
 	}
 
-	stmt := new(Statement)
-	stmt.Keyword = lex.Current().Literal
+	stmt := statements.NewStatement(lex.Current().Literal)
 
 	if !lex.Next() {
 		return stmt, nil
@@ -91,7 +88,11 @@ func parseStatement(lex *lexer.TokenList) (*Statement, error) {
 		if err != nil {
 			return nil, err
 		}
-		stmt.Arguments = args
+
+		err = stmt.UnpackArgs(args)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if lex.Empty() {
@@ -107,20 +108,24 @@ func parseStatement(lex *lexer.TokenList) (*Statement, error) {
 		if err != nil {
 			return nil, err
 		}
-		stmt.Modifiers = append(stmt.Modifiers, mod)
+
+		err = mod.Apply(stmt)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return stmt, nil
 }
 
-func parseProperty(lex *lexer.TokenList) (*Modifier, error) {
+func parseProperty(lex *lexer.TokenList) (*statements.Modifier, error) {
 	// property = ? identifier ?, [ arguments ]
 
 	if lex.Current().Type != lexer.IdentifierType {
 		return nil, errors.Join(ErrUnexpectedToken, fmt.Errorf("expected modifier name, not %v", lex.Current()))
 	}
 
-	mod := new(Modifier)
+	mod := new(statements.Modifier)
 	mod.Name = lex.Current().Literal
 
 	if !lex.Next() {

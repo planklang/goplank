@@ -1,11 +1,19 @@
-package parser
+package statements
 
-import "github.com/planklang/goplank/parser/types"
+import (
+	"errors"
+	"fmt"
+	"github.com/planklang/goplank/parser/types"
+)
 
-type Statement struct {
-	Keyword   string
-	Arguments *types.Tuple
-	Modifiers []*Modifier
+var (
+	ErrInvalidArgument = errors.New("invalid argument")
+)
+
+type Statement interface {
+	UnpackArgs(args *types.Tuple) error
+	Keyword() string
+	String() string
 }
 
 //type Axis struct {
@@ -67,3 +75,13 @@ type Statement struct {
 //func (a *Axis) String() string {
 //	return fmt.Sprintf("Axis{%s %s [%f %f]}", a.Target, a.Label, a.Range[0], a.Range[1])
 //}
+func NewStatement(keyword string) Statement {
+	var stmt Statement
+
+	switch keyword {
+	default:
+		panic(fmt.Sprintf("statement %s not implemented yet", keyword))
+	}
+
+	return stmt
+}

@@ -1,7 +1,9 @@
 package parser
 
+import "github.com/planklang/goplank/parser/statements"
+
 type Figure struct {
-	Stmts []*Statement
+	Stmts []statements.Statement
 }
 
 func (f *Figure) Eval() error { return nil }
