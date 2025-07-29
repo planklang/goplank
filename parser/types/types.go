@@ -1,6 +1,8 @@
 package types
 
-import "strings"
+import (
+	"strings"
+)
 
 type Type interface {
 	Is(Type) bool
@@ -40,6 +42,12 @@ type TupleType struct {
 
 func (t *TupleType) Is(other Type) bool {
 	otherTuple, ok := other.(*TupleType)
+
+	// Tuples with a single value are compatible with the type they contain.
+	if !ok && len(t.types) == 1 && t.types[0].Is(other) {
+		return true
+	}
+
 	if !ok || (len(t.types) != len(otherTuple.types)) {
 		return false
 	}
