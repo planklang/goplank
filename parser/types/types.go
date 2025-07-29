@@ -5,7 +5,11 @@ import (
 )
 
 type Type interface {
+	// Is function should be symmetric ( a.Is(b) == b.Is(a) )
 	Is(Type) bool
+	// Castable should be true for each type t such that Is(t) is true
+	Castable(Type) bool
+
 	String() string
 }
 
@@ -18,6 +22,29 @@ const (
 
 type LiteralType struct {
 	t string
+}
+
+func (t *LiteralType) Castable(target Type) bool {
+	if target.Is(t) {
+		return true
+	}
+
+	if target.Is(NewTupleType(t)) {
+		return true
+	}
+
+	switch t.t {
+	case stringLiteral:
+		return false
+	case intLiteral:
+		return target.Is(StringType) || target.Is(FloatType)
+	case floatLiteral:
+		return target.Is(StringType)
+	case defaultLiteral:
+		return target.Is(StringType)
+	default:
+		panic("unhandled literal type")
+	}
 }
 
 func (t *LiteralType) Is(other Type) bool {
@@ -38,6 +65,22 @@ var (
 
 type TupleType struct {
 	types []Type
+}
+
+func (t *TupleType) Castable(other Type) bool {
+	if t.Is(other) {
+		return true
+	}
+
+	if other.Is(NewTupleType(t)) {
+		return true
+	}
+
+	if len(t.types) != 1 {
+		return false
+	}
+
+	return t.types[0].Castable(other)
 }
 
 func (t *TupleType) Is(other Type) bool {
@@ -76,6 +119,18 @@ func NewTupleType(types ...Type) *TupleType {
 
 type ListType struct {
 	t Type
+}
+
+func (t *ListType) Castable(other Type) bool {
+	if t.Is(other) {
+		return true
+	}
+
+	if other.Is(NewTupleType(t)) {
+		return true
+	}
+
+	return false
 }
 
 func (t *ListType) Is(other Type) bool {
