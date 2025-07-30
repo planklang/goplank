@@ -67,12 +67,12 @@ type TupleType struct {
 	types []Type
 }
 
-func (t *TupleType) Castable(other Type) bool {
-	if t.Is(other) {
+func (t *TupleType) Castable(target Type) bool {
+	if t.Is(target) {
 		return true
 	}
 
-	if other.Is(NewTupleType(t)) {
+	if target.Is(NewTupleType(t)) {
 		return true
 	}
 
@@ -80,7 +80,7 @@ func (t *TupleType) Castable(other Type) bool {
 		return false
 	}
 
-	return t.types[0].Castable(other)
+	return t.types[0].Castable(target)
 }
 
 func (t *TupleType) Is(other Type) bool {
@@ -121,12 +121,12 @@ type ListType struct {
 	t Type
 }
 
-func (t *ListType) Castable(other Type) bool {
-	if t.Is(other) {
+func (t *ListType) Castable(target Type) bool {
+	if t.Is(target) {
 		return true
 	}
 
-	if other.Is(NewTupleType(t)) {
+	if target.Is(NewTupleType(t)) {
 		return true
 	}
 
